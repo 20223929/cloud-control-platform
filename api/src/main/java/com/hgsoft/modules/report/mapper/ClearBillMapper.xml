@@ -1,0 +1,538 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.report.mapper.ClearBillMapper">
+
+	<resultMap type="com.hgsoft.modules.report.entity.ClearBill" id="BaseResultMap" autoMapping="true">
+		<id column="sys_id" property="sysId" />
+    	<result column="trx_date" property="trxDate" />
+    	<result column="merchant_id" property="merchantId" />
+    	<result column="merchant_name" property="merchantName" />
+    	<result column="site_id" property="siteId" />
+    	<result column="site_name" property="siteName" />
+    	<result column="total_trans_cnt" property="totalTransCnt" />
+    	<result column="total_trans_amt" property="totalTransAmt" />
+    	<result column="total_settlement_cnt" property="totalSettlementCnt" />
+    	<result column="total_settlement_amt" property="totalSettlementAmt" />
+    	<result column="total_clear_cnt" property="totalClearCnt" />
+    	<result column="total_clear_amt" property="totalClearAmt" />
+    	<result column="total_unclear_cnt" property="totalUnclearCnt" />
+    	<result column="total_unclear_amt" property="totalUnclearAmt" />
+    	<result column="clear_exception_cnt" property="clearExceptionCnt" />
+    	<result column="clear_exception_amt" property="clearExceptionAmt" />
+    	<result column="clear_bad_cnt" property="clearBadCnt" />
+    	<result column="clear_bad_amt" property="clearBadAmt" />
+    	<result column="toll_settlement_interval" property="tollSettlementInterval" />
+    	<result column="createtime" property="createtime" />
+		<result column="merchant_group_id" property="merchantGroupId" />
+	</resultMap>
+
+	<sql id="clearBillColumns">
+		a.sys_id AS "sysId",
+		a.trx_date AS "trxDate",
+		a.merchant_id AS "merchantId",
+		a.merchant_name AS "merchantName",
+		a.site_id AS "siteId",
+		a.site_name AS "siteName",
+		a.total_trans_cnt AS "totalTransCnt",
+		a.total_trans_amt AS "totalTransAmt",
+		a.total_settlement_cnt AS "totalSettlementCnt",
+		a.total_settlement_amt AS "totalSettlementAmt",
+		a.total_clear_cnt AS "totalClearCnt",
+		a.total_clear_amt AS "totalClearAmt",
+		a.total_unclear_cnt AS "totalUnclearCnt",
+		a.total_unclear_amt AS "totalUnclearAmt",
+		a.clear_exception_cnt AS "clearExceptionCnt",
+		a.clear_exception_amt AS "clearExceptionAmt",
+		a.clear_bad_cnt AS "clearBadCnt",
+		a.clear_bad_amt AS "clearBadAmt",
+		a.toll_settlement_interval AS "tollSettlementInterval",
+        case when a.toll_settlement_interval = 1 then 'T+1'
+        when a.toll_settlement_interval = 2 then 'T+4'
+        when a.toll_settlement_interval = 3 then '月结'
+        ELSE '未知'
+		END AS "tollSettlementIntervalTxt",
+		a.createtime AS "createtime",
+        a.merchant_group_id AS merchantGroupId
+	</sql>
+
+	<sql id="clearBillJoins">
+	</sql>
+	<select id="clearBillPage" resultType="com.hgsoft.modules.report.entity.ClearBill" >
+		select * from (
+		select
+		A.trxDate AS trxDate,
+		A.merchantId AS merchantId,
+		A.merchantName AS merchantName,
+		A.siteId AS siteId,
+		A.siteName AS siteName,
+		SUM(A.totalTransCnt) AS totalTransCnt,
+		SUM(A.totalTransAmt) AS totalTransAmt,
+		SUM(A.totalSettlementCnt) AS totalSettlementCnt,
+		SUM(A.totalSettlementAmt) AS totalSettlementAmt,
+		SUM(A.totalClearCnt) AS totalClearCnt,
+		SUM(A.totalClearAmt) AS totalClearAmt,
+		SUM(A.totalUnclearCnt) AS totalUnclearCnt,
+		SUM(A.totalUnClearAmt) AS totalUnClearAmt,
+		SUM(A.clearExceptionCnt) AS clearExceptionCnt,
+		SUM(A.clearExceptionAmt) AS clearExceptionAmt,
+		SUM(A.clearBadCnt) AS clearBadCnt,
+		SUM(A.clearBadAmt) AS clearBadAmt,
+		A.tollSettlementInterval AS tollSettlementInterval,
+		A.tollSettlementIntervalTxt AS tollSettlementIntervalTxt
+		from (
+		select
+		DATE_FORMAT(e.trans_time,'${statisticsDimension}') trxDate,
+		e.merchant_id AS merchantId,
+		m.name AS merchantName,
+		e.site_id AS siteId,
+		s.name AS siteName,
+		COUNT(e.sys_id) AS totalTransCnt,
+		SUM(e.merchant_real_fee) AS totalTransAmt,
+		SUM(CASE WHEN e.clear_check_result = 1 THEN 1 ELSE 0 END) AS totalSettlementCnt,
+		SUM(CASE WHEN e.clear_check_result = 1 THEN e.merchant_real_fee ELSE 0 END) AS totalSettlementAmt,
+		SUM(CASE WHEN e.clear_result is null THEN 0 ELSE 1 END) totalClearCnt,
+		SUM(CASE WHEN e.clear_result is null THEN 0 ELSE e.merchant_real_fee END) totalClearAmt,
+		SUM(CASE WHEN e.clear_result is null THEN 1 ELSE 0 END) totalUnclearCnt,
+		SUM(CASE WHEN e.clear_result is null THEN e.merchant_real_fee ELSE 0 END) totalUnClearAmt,
+		SUM(CASE WHEN e.clear_sta = 1 THEN 1 ELSE 0 END) clearExceptionCnt,
+		SUM(CASE WHEN e.clear_sta = 1 THEN e.merchant_real_fee ELSE 0 END) clearExceptionAmt,
+		SUM(CASE WHEN e.clear_sta = 2 THEN 1 ELSE 0 END) AS clearBadCnt,
+		SUM(CASE WHEN e.clear_sta = 2 THEN e.merchant_real_fee ELSE 0 END) clearBadAmt,
+		m.center_settlement_cycle tollSettlementInterval,
+		case when m.center_settlement_cycle = 1 then 'T+1'
+		when m.center_settlement_cycle = 2 then 'T+4'
+		when m.center_settlement_cycle = 3 then '月结'
+		ELSE '未知'
+		END AS "tollSettlementIntervalTxt"
+		from tb_etc_transaction_eexit e
+		left join tb_merchant m on e.merchant_id = m.platform_merchant_id
+		left join tb_site s on e.site_id = s.platform_site_id
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">AND e.trans_time BETWEEN
+				STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND e.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND e.merchant_id = #{entity.merchantId }
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND e.site_id = #{entity.siteId }
+			</if>
+			AND (e.handle_flag is null or e.handle_flag = 0)
+		</where>
+		group by e.merchant_id, e.site_id, DATE_FORMAT(e.trans_time,'${statisticsDimension}')
+		UNION ALL
+		select
+		DATE_FORMAT(a.trx_date,'${statisticsDimension}') trxDate,
+		a.merchant_id AS merchantId,
+		a.merchant_name AS merchantName,
+		a.site_id AS siteId,
+		a.site_name AS siteName,
+		SUM(a.total_trans_cnt) AS totalTransCnt,
+		SUM(a.total_trans_amt) AS totalTransAmt,
+		SUM(a.total_settlement_cnt) AS totalSettlementCnt,
+		SUM(a.total_settlement_amt) AS totalSettlementAmt,
+		SUM(a.total_clear_cnt) totalClearCnt,
+		SUM(a.total_clear_amt) totalClearAmt,
+		SUM(a.total_unclear_cnt) totalUnclearCnt,
+		SUM(a.total_unclear_amt) totalUnClearAmt,
+		SUM(a.clear_exception_cnt) clearExceptionCnt,
+		SUM(a.clear_exception_amt) clearExceptionAmt,
+		SUM(a.clear_bad_cnt) AS clearBadCnt,
+		SUM(a.clear_bad_amt) clearBadAmt,
+		a.toll_settlement_interval tollSettlementInterval,
+		case when a.toll_settlement_interval = 1 then 'T+1'
+		when a.toll_settlement_interval = 2 then 'T+4'
+		when a.toll_settlement_interval = 3 then '月结'
+		ELSE '未知'
+		END AS "tollSettlementIntervalTxt"
+		FROM tb_clear_bill a
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">AND a.trx_date BETWEEN
+				STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND a.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND a.merchant_id = #{entity.merchantId}
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND a.site_id = #{entity.siteId}
+			</if>
+		</where>
+		group by a.merchant_id, a.site_id, DATE_FORMAT(a.trx_date,'${statisticsDimension}')
+		)A
+		GROUP BY A.merchantId ,A.siteId, A.trxDate
+		)B
+		order by B.trxDate desc
+	</select>
+
+
+	<select id="getById" resultType="com.hgsoft.modules.report.entity.ClearBill" >
+		SELECT
+			<include refid="clearBillColumns"/>
+		FROM tb_clear_bill a
+		<include refid="clearBillJoins"/>
+		WHERE a.sysId = #{sys_id}
+	</select>
+
+
+	<select id="getByEntity" resultType="com.hgsoft.modules.report.entity.ClearBill" >
+		SELECT
+			<include refid="clearBillColumns"/>
+		FROM tb_clear_bill a
+		<include refid="clearBillJoins"/>
+		WHERE a.sysId = #{sys_id}
+	</select>
+
+	<select id="findPage" resultType="com.hgsoft.modules.report.entity.ClearBill" >
+		SELECT
+			<include refid="clearBillColumns" />
+		FROM tb_clear_bill a
+		<include refid="clearBillJoins"/>
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND a.trx_date BETWEEN
+				STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND a.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND a.merchant_id = #{entity.merchantId}
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND a.site_id = #{entity.siteId}
+			</if>
+		</where>
+		group by  a.merchant_id, a.site_id, a.trx_date
+		order by a.trans_time desc
+	</select>
+
+	<select id="findList" resultType="com.hgsoft.modules.report.entity.ClearBill" >
+		select * from (
+		select
+		A.trxDate AS trxDate,
+		A.merchantId AS merchantId,
+		A.merchantName AS merchantName,
+		A.siteId AS siteId,
+		A.siteName AS siteName,
+		SUM(A.totalTransCnt) AS totalTransCnt,
+		SUM(A.totalTransAmt) AS totalTransAmt,
+		SUM(A.totalSettlementCnt) AS totalSettlementCnt,
+		SUM(A.totalSettlementAmt) AS totalSettlementAmt,
+		SUM(A.totalClearCnt) AS totalClearCnt,
+		SUM(A.totalClearAmt) AS totalClearAmt,
+		SUM(A.totalUnclearCnt) AS totalUnclearCnt,
+		SUM(A.totalUnClearAmt) AS totalUnClearAmt,
+		SUM(A.clearExceptionCnt) AS clearExceptionCnt,
+		SUM(A.clearExceptionAmt) AS clearExceptionAmt,
+		SUM(A.clearBadCnt) AS clearBadCnt,
+		SUM(A.clearBadAmt) AS clearBadAmt,
+		A.tollSettlementInterval AS tollSettlementInterval,
+		A.tollSettlementIntervalTxt AS tollSettlementIntervalTxt
+		from (
+		select
+		DATE_FORMAT(e.trans_time,'${statisticsDimension}') trxDate,
+		e.merchant_id AS merchantId,
+		m.name AS merchantName,
+		e.site_id AS siteId,
+		s.name AS siteName,
+		COUNT(e.sys_id) AS totalTransCnt,
+		SUM(e.merchant_real_fee) AS totalTransAmt,
+		SUM(CASE WHEN e.clear_check_result = 1 THEN 1 ELSE 0 END) AS totalSettlementCnt,
+		SUM(CASE WHEN e.clear_check_result = 1 THEN e.merchant_real_fee ELSE 0 END) AS totalSettlementAmt,
+		SUM(CASE WHEN e.clear_result is null THEN 0 ELSE 1 END) totalClearCnt,
+		SUM(CASE WHEN e.clear_result is null THEN 0 ELSE e.merchant_real_fee END) totalClearAmt,
+		SUM(CASE WHEN e.clear_result is null THEN 1 ELSE 0 END) totalUnclearCnt,
+		SUM(CASE WHEN e.clear_result is null THEN e.merchant_real_fee ELSE 0 END) totalUnClearAmt,
+		SUM(CASE WHEN e.clear_sta = 1 THEN 1 ELSE 0 END) clearExceptionCnt,
+		SUM(CASE WHEN e.clear_sta = 1 THEN e.merchant_real_fee ELSE 0 END) clearExceptionAmt,
+		SUM(CASE WHEN e.clear_sta = 2 THEN 1 ELSE 0 END) AS clearBadCnt,
+		SUM(CASE WHEN e.clear_sta = 2 THEN e.merchant_real_fee ELSE 0 END) clearBadAmt,
+		m.center_settlement_cycle tollSettlementInterval,
+		case when m.center_settlement_cycle = 1 then 'T+1'
+		when m.center_settlement_cycle = 2 then 'T+4'
+		when m.center_settlement_cycle = 3 then '月结'
+		ELSE '未知'
+		END AS "tollSettlementIntervalTxt"
+		from tb_etc_transaction_eexit e
+		left join tb_merchant m on e.merchant_id = m.platform_merchant_id
+		left join tb_site s on e.site_id = s.platform_site_id
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">AND e.trans_time BETWEEN
+				STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND e.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND e.merchant_id = #{entity.merchantId }
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND e.site_id = #{entity.siteId }
+			</if>
+			AND (e.handle_flag is null or e.handle_flag = 0)
+		</where>
+		group by e.merchant_id, e.site_id, DATE_FORMAT(e.trans_time,'${statisticsDimension}')
+		UNION ALL
+		select
+		DATE_FORMAT(a.trx_date,'${statisticsDimension}') trxDate,
+		a.merchant_id AS merchantId,
+		a.merchant_name AS merchantName,
+		a.site_id AS siteId,
+		a.site_name AS siteName,
+		SUM(a.total_trans_cnt) AS totalTransCnt,
+		SUM(a.total_trans_amt) AS totalTransAmt,
+		SUM(a.total_settlement_cnt) AS totalSettlementCnt,
+		SUM(a.total_settlement_amt) AS totalSettlementAmt,
+		SUM(a.total_clear_cnt) totalClearCnt,
+		SUM(a.total_clear_amt) totalClearAmt,
+		SUM(a.total_unclear_cnt) totalUnclearCnt,
+		SUM(a.total_unclear_amt) totalUnClearAmt,
+		SUM(a.clear_exception_cnt) clearExceptionCnt,
+		SUM(a.clear_exception_amt) clearExceptionAmt,
+		SUM(a.clear_bad_cnt) AS clearBadCnt,
+		SUM(a.clear_bad_amt) clearBadAmt,
+		a.toll_settlement_interval tollSettlementInterval,
+		case when a.toll_settlement_interval = 1 then 'T+1'
+		when a.toll_settlement_interval = 2 then 'T+4'
+		when a.toll_settlement_interval = 3 then '月结'
+		ELSE '未知'
+		END AS "tollSettlementIntervalTxt"
+		FROM tb_clear_bill a
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">AND a.trx_date BETWEEN
+				STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND a.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND a.merchant_id = #{entity.merchantId}
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND a.site_id = #{entity.siteId}
+			</if>
+		</where>
+		group by a.merchant_id, a.site_id, DATE_FORMAT(a.trx_date,'${statisticsDimension}')
+		)A
+		GROUP BY A.merchantId ,A.siteId, A.trxDate
+		)B
+		order by B.trxDate desc
+	</select>
+
+	<select id="findAllList" resultType="com.hgsoft.modules.report.entity.ClearBill" >
+		SELECT
+			<include refid="clearBillColumns"/>
+		FROM tb_clear_bill a
+	</select>
+
+	<insert id="insertEntity">
+		INSERT INTO tb_clear_bill(
+			sys_id,
+			trx_date,
+			toll_settlement_date,
+			merchant_id,
+			merchant_name,
+			site_id,
+			site_name,
+			total_trans_cnt,
+			total_trans_amt,
+			total_settlement_cnt,
+			total_settlement_amt,
+			total_clear_cnt,
+			total_clear_amt,
+			total_unclear_cnt,
+			total_unclear_amt,
+			clear_exception_cnt,
+			clear_exception_amt,
+			clear_bad_cnt,
+			clear_bad_amt,
+			toll_settlement_interval,
+			createtime
+		) VALUES (
+            #{sysId},
+            #{trxDate},
+            #{tollSettlementDate},
+            #{merchantId},
+            #{merchantName},
+            #{siteId},
+            #{siteName},
+            #{totalTransCnt},
+            #{totalTransAmt},
+            #{totalSettlementCnt},
+            #{totalSettlementAmt},
+            #{totalClearCnt},
+            #{totalClearAmt},
+            #{totalUnclearCnt},
+            #{totalUnclearAmt},
+            #{clearExceptionCnt},
+            #{clearExceptionAmt},
+            #{clearBadCnt},
+            #{clearBadAmt},
+            #{tollSettlementInterval},
+            #{createtime}
+		)
+	</insert>
+
+	<update id="updateEntity">
+		UPDATE tb_clear_bill
+		<trim prefix="set" suffixOverrides=",">
+                  sys_id = #{sysId},
+                  trx_date = #{trxDate},
+                  toll_settlement_date = #{tollSettlementDate},
+                  merchant_id = #{merchantId},
+                  merchant_name = #{merchantName},
+                  site_id = #{siteId},
+                  site_name = #{siteName},
+                  total_trans_cnt = #{totalTransCnt},
+                  total_trans_amt = #{totalTransAmt},
+                  total_settlement_cnt = #{totalSettlementCnt},
+                  total_settlement_amt = #{totalSettlementAmt},
+                  total_clear_cnt = #{totalClearCnt},
+                  total_clear_amt = #{totalClearAmt},
+                  total_unclear_cnt = #{totalUnclearCnt},
+                  total_unclear_amt = #{totalUnclearAmt},
+                  clear_exception_cnt = #{clearExceptionCnt},
+                  clear_exception_amt = #{clearExceptionAmt},
+                  clear_bad_cnt = #{clearBadCnt},
+                  clear_bad_amt = #{clearBadAmt},
+                  toll_settlement_interval = #{tollSettlementInterval},
+                  createtime = #{createtime}
+        </trim>
+		WHERE a.sysId = #{sys_id}
+	</update>
+
+
+	<delete id="removeById">
+		DELETE
+		FROM tb_clear_bill
+		WHERE a.sysId = #{sys_id}
+	</delete>
+
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+		UPDATE tb_clear_bill SET
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE sysId = #{sys_id}
+	</update>
+
+
+	<!-- 根据实体名称和字段名称和字段值获取唯一记录 -->
+	<select id="findUniqueByProperty" resultType="com.hgsoft.modules.report.entity.ClearBill" statementType="STATEMENT">
+		select * FROM tb_clear_bill  where ${propertyName} = '${value}'
+	</select>
+
+	<select id="getSum" resultType="com.hgsoft.modules.report.entity.ClearBill">
+		select
+		SUM(B.totalTransCnt) AS totalTransCnt,
+		SUM(B.totalTransAmt) AS totalTransAmt,
+		SUM(B.totalSettlementCnt) AS totalSettlementCnt,
+		SUM(B.totalSettlementAmt) AS totalSettlementAmt,
+		SUM(B.totalClearCnt) totalClearCnt,
+		SUM(B.totalClearAmt) totalClearAmt,
+		SUM(B.totalUnclearCnt) totalUnclearCnt,
+		SUM(B.totalUnClearAmt) totalUnClearAmt,
+		SUM(B.clearExceptionCnt) clearExceptionCnt,
+		SUM(B.clearExceptionAmt) clearExceptionAmt,
+		SUM(B.clearBadCnt) AS clearBadCnt,
+		SUM(B.clearBadAmt) clearBadAmt
+		from(
+		select
+		DATE_FORMAT(e.trans_time,'${statisticsDimension}') trxDate,
+		e.merchant_id AS merchantId,
+		m.name AS merchantName,
+		e.site_id AS siteId,
+		s.name AS siteName,
+		COUNT(e.sys_id) AS totalTransCnt,
+		SUM(e.merchant_real_fee) AS totalTransAmt,
+		SUM(CASE WHEN e.clear_check_result = 1 THEN 1 ELSE 0 END) AS totalSettlementCnt,
+		SUM(CASE WHEN e.clear_check_result = 1 THEN e.merchant_real_fee ELSE 0 END) AS totalSettlementAmt,
+		SUM(CASE WHEN e.clear_result is null THEN 0 ELSE 1 END) totalClearCnt,
+		SUM(CASE WHEN e.clear_result is null THEN 0 ELSE e.merchant_real_fee END) totalClearAmt,
+		SUM(CASE WHEN e.clear_result is null THEN 1 ELSE 0 END) totalUnclearCnt,
+		SUM(CASE WHEN e.clear_result is null THEN e.merchant_real_fee ELSE 0 END) totalUnClearAmt,
+		SUM(CASE WHEN e.clear_sta = 1 THEN 1 ELSE 0 END) clearExceptionCnt,
+		SUM(CASE WHEN e.clear_sta = 1 THEN e.merchant_real_fee ELSE 0 END) clearExceptionAmt,
+		SUM(CASE WHEN e.clear_sta = 2 THEN 1 ELSE 0 END) AS clearBadCnt,
+		SUM(CASE WHEN e.clear_sta = 2 THEN e.merchant_real_fee ELSE 0 END) clearBadAmt,
+		m.center_settlement_cycle tollSettlementInterval,
+		case when m.center_settlement_cycle = 1 then 'T+1'
+		when m.center_settlement_cycle = 2 then 'T+4'
+		when m.center_settlement_cycle = 3 then '月结'
+		ELSE '未知'
+		END AS "tollSettlementIntervalTxt"
+		from tb_etc_transaction_eexit e
+		left join tb_merchant m on e.merchant_id = m.platform_merchant_id
+		left join tb_site s on e.site_id = s.platform_site_id
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">AND e.trans_time BETWEEN
+				STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND e.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND e.merchant_id = #{entity.merchantId}
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND e.site_id = #{entity.siteId}
+			</if>
+			AND (e.handle_flag is null or e.handle_flag = 0)
+		</where>
+		group by  e.merchant_id, e.site_id, DATE_FORMAT(e.trans_time,'${statisticsDimension}')
+		UNION ALL
+		select
+		DATE_FORMAT(a.trx_date,'${statisticsDimension}') trxDate,
+		a.merchant_id AS merchantId,
+		a.merchant_name AS merchantName,
+		a.site_id AS siteId,
+		a.site_name AS siteName,
+		SUM(a.total_trans_cnt) AS totalTransCnt,
+		SUM(a.total_trans_amt) AS totalTransAmt,
+		SUM(a.total_settlement_cnt) AS totalSettlementCnt,
+		SUM(a.total_settlement_amt) AS totalSettlementAmt,
+		SUM(a.total_clear_cnt) totalClearCnt,
+		SUM(a.total_clear_amt) totalClearAmt,
+		SUM(a.total_unclear_cnt) totalUnclearCnt,
+		SUM(a.total_unclear_amt) totalUnClearAmt,
+		SUM(a.clear_exception_cnt) clearExceptionCnt,
+		SUM(a.clear_exception_amt) clearExceptionAmt,
+		SUM(a.clear_bad_cnt) AS clearBadCnt,
+		SUM(a.clear_bad_amt) clearBadAmt,
+		a.toll_settlement_interval tollSettlementInterval,
+		case when a.toll_settlement_interval = 1 then 'T+1'
+		when a.toll_settlement_interval = 2 then 'T+4'
+		when a.toll_settlement_interval = 3 then '月结'
+		ELSE '未知'
+		END AS "tollSettlementIntervalTxt"
+		FROM tb_clear_bill a
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">AND a.trx_date BETWEEN
+				STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND a.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND a.merchant_id = #{entity.merchantId}
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND a.site_id = #{entity.siteId}
+			</if>
+		</where>
+		group by  a.merchant_id, a.site_id, DATE_FORMAT(a.trx_date,'${statisticsDimension}')
+		)B
+	</select>
+</mapper>

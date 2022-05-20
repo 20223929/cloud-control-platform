@@ -1,0 +1,343 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.bankbillcheck.mapper.TBMerchantBillCheckExpPlatformEtcMapper">
+
+
+    <sql id="select_online">
+        select
+        DATE_FORMAT(c.trans_time, '%Y-%m-%d') AS transDate,
+        c.merchant_group_id as merchantGroupId,
+        c.merchant_id as merchantId,
+        c.site_id as siteId,
+        c.merchant_real_fee as systemTotalAmount,
+        1 as systemTotalCount,
+        0 as otherTotalAmount,
+        0 as otherTotalCount,
+        0 as confirmTypeFlag,
+        0 as refundCount,
+        1 as eexitCount,
+        c.service_type as serviceType
+        from tb_online_eexit c
+        <where>
+        <if test="entity.merchantId != null and entity.merchantId != ''">
+            AND c.merchant_id = #{entity.merchantId}
+        </if>
+        <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+            AND c.merchant_group_id = #{entity.merchantGroupId}
+        </if>
+        <if test="entity.siteId != null and entity.siteId != ''">
+            AND c.site_id = #{entity.siteId}
+        </if>
+        <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+            AND c.trans_time BETWEEN date_format(#{entity.beginTransDate},'%Y-%m-%d %H:%i:%s') AND date_format(#{entity.endTransDate},'%Y-%m-%d %H:%i:%s')
+        </if>
+        <if test="entity.serviceType != null and entity.serviceType != ''">
+            AND c.service_type = #{entity.serviceType}
+        </if>
+        </where>
+    </sql>
+
+    <sql id="select_offline">
+        select
+        DATE_FORMAT(c.trans_time, '%Y-%m-%d') AS transDate,
+        c.merchant_group_id as merchantGroupId,
+        c.merchant_id as merchantId,
+        c.site_id as siteId,
+        c.merchant_real_fee as systemTotalAmount,
+        1 as systemTotalCount,
+        0 as otherTotalAmount,
+        0 as otherTotalCount,
+        0 as confirmTypeFlag,
+        0 as refundCount,
+        1 as eexitCount,
+        c.service_type as serviceType
+        from tb_etc_transaction_eexit c
+        <where>
+        <if test="entity.merchantId != null and entity.merchantId != ''">
+            AND c.merchant_id = #{entity.merchantId}
+        </if>
+        <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+            AND c.merchant_group_id = #{entity.merchantGroupId}
+        </if>
+        <if test="entity.siteId != null and entity.siteId != ''">
+            AND c.site_id = #{entity.siteId}
+        </if>
+        <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+            AND c.trans_time BETWEEN date_format(#{entity.beginTransDate},'%Y-%m-%d %H:%i:%s') AND date_format(#{entity.endTransDate},'%Y-%m-%d %H:%i:%s')
+        </if>
+        <if test="entity.serviceType != null and entity.serviceType != ''">
+            AND c.service_type = #{entity.serviceType}
+        </if>
+        </where>
+    </sql>
+
+    <sql id="select_online_refund">
+        select
+        DATE_FORMAT(c.refund_complete_time, '%Y-%m-%d') AS transDate,
+        c.merchant_group_id as merchantGroupId,
+        c.merchant_id as merchantId,
+        c.site_id as siteId,
+        -c.refund_fee as systemTotalAmount,
+        1 as systemTotalCount,
+        0 as otherTotalAmount,
+        0 as otherTotalCount,
+        0 as confirmTypeFlag,
+        1 as refundCount,
+        0 as eexitCount,
+        c.service_type as serviceType
+        from tb_online_refund_eexit c
+        <where>
+            refund_state = 2
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND c.merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND c.merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND c.site_id = #{entity.siteId}
+            </if>
+            <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+                AND c.refund_complete_time BETWEEN date_format(#{entity.beginTransDate},'%Y-%m-%d %H:%i:%s') AND date_format(#{entity.endTransDate},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="entity.serviceType != null and entity.serviceType != ''">
+                AND c.service_type = #{entity.serviceType}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="select_tb_merchant_bill_check_sum">
+        select
+        c.merchant_check_date as transDate,
+        c.merchant_group_id as merchantGroupId,
+        c.merchant_id as merchantId,
+        c.site_id as siteId,
+        0 as systemTotalAmount,
+        0 as systemTotalCount,
+        (c.total_receiver_amount + ifnull(d.paid_amount,0)) as otherTotalAmount,
+        (c.receiver_count + ifnull(d.paid_count,0)) as otherTotalCount,
+        1 as confirmTypeFlag,
+        0 as refundCount,
+        0 as eexitCount,
+        substr(c.merchant_id,5,2)+0 as serviceType
+        from tb_merchant_bill_check_sum c left join (
+            select tb_merchant_bill_check_sum_sys_id,sum(-paid_amount) paid_amount,count(0) paid_count  from tb_merchant_bill_check_detail where trans_type = 2 group by tb_merchant_bill_check_sum_sys_id
+        ) d on c.sys_id = d.tb_merchant_bill_check_sum_sys_id
+        <where>
+        <if test="entity.merchantId != null and entity.merchantId != ''">
+            AND c.merchant_id = #{entity.merchantId}
+        </if>
+        <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+            AND c.merchant_group_id = #{entity.merchantGroupId}
+        </if>
+        <if test="entity.siteId != null and entity.siteId != ''">
+            AND c.site_id = #{entity.siteId}
+        </if>
+        <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+            AND c.merchant_check_date BETWEEN SUBSTR(#{entity.beginTransDate},1,10) AND SUBSTR(#{entity.endTransDate},1,10)
+        </if>
+        </where>
+    </sql>
+
+    <sql id="select_temp">
+        select a.transDate,
+        a.merchantGroupId,
+        a.merchantId,
+        a.siteId,
+        a.serviceType,
+        sum(a.systemTotalAmount) as systemTotalAmount,
+        sum(a.systemTotalCount) as systemTotalCount,
+        sum(a.otherTotalAmount) as otherTotalAmount,
+        sum(a.otherTotalCount) as otherTotalCount,
+        sum(a.confirmTypeFlag) as confirmTypeFlag,
+        sum(a.refundCount) as refundCount,
+        sum(a.eexitCount) as eexitCount
+        from (
+        <include refid="select_offline"/>
+        union all
+        <include refid="select_online"/>
+        union all
+        <include refid="select_online_refund"/>
+        union all
+        <include refid="select_tb_merchant_bill_check_sum"/>
+        ) a group by a.transDate,
+        a.merchantGroupId,
+        a.merchantId,
+        a.siteId,
+        a.serviceType
+    </sql>
+
+    <sql id="select_base">
+        select temp.transDate,
+        temp.merchantGroupId,
+        temp.merchantId,
+        temp.siteId,
+        temp.serviceType,
+        temp.systemTotalAmount,
+        temp.systemTotalCount,
+        temp.otherTotalAmount,
+        temp.otherTotalCount,
+        temp.confirmTypeFlag,
+        temp.refundCount,
+        temp.eexitCount,
+        etc.total_count totalCount,
+        etc.total_amount totalAmount,
+        etc.remark remark,
+        etc.confirm_time confirmTime,
+        etc.confirm_state confirmState,
+        etc.confirm_man confirmMan
+        from
+        (<include refid="select_temp"/>) temp left join
+        tb_merchant_bill_check_exp_platform_etc etc on
+        temp.transDate = etc.trans_date and
+        temp.merchantGroupId = etc.merchant_group_id and
+        temp.merchantId = etc.merchant_id and
+        temp.siteId = etc.site_id
+        <where>
+            <if test="entity.confirmType != null and entity.confirmType eq '自动对账' ">
+                AND temp.confirmTypeFlag > 0
+            </if>
+            <if test="entity.confirmType != null and entity.confirmType eq '人工对账' ">
+                AND temp.confirmTypeFlag = 0
+            </if>
+            <if test="entity.confirmStateList != null and entity.confirmStateList.size() > 0 and entity.confirmStateList.size() &lt; 3">
+                <foreach collection="entity.confirmStateList" open="AND (" close=")" separator=" OR " item="confirmState">
+                   <choose>
+                       <when test="confirmState == 1">
+                           etc.confirm_state = #{confirmState}
+                       </when>
+                       <when test="confirmState == 2">
+                           ((etc.confirm_state = #{confirmState}) or
+                           (temp.confirmTypeFlag > 0 AND etc.confirm_state is null AND (temp.systemTotalAmount =
+                           temp.otherTotalAmount and temp.systemTotalCount = temp.otherTotalCount)))
+                       </when>
+                       <when test="confirmState == 0">
+                           (
+                           (temp.confirmTypeFlag > 0 AND etc.confirm_state is null AND (temp.systemTotalAmount !=
+                           temp.otherTotalAmount and temp.systemTotalCount != temp.otherTotalCount))
+                           OR
+                           (temp.confirmTypeFlag = 0 AND etc.confirm_state is null)
+                           )
+                       </when>
+                   </choose>
+                </foreach>
+            </if>
+<!--            <if test="entity.confirmState != null and entity.confirmState == 1 ">-->
+<!--                AND etc.confirm_state = #{entity.confirmState}-->
+<!--            </if>-->
+<!--            <if test="entity.confirmState != null and entity.confirmState == 2 ">-->
+<!--                AND ((etc.confirm_state = #{entity.confirmState}) or-->
+<!--                (temp.confirmTypeFlag > 0 AND etc.confirm_state is null AND (temp.systemTotalAmount =-->
+<!--                temp.otherTotalAmount and temp.systemTotalCount = temp.otherTotalCount)))-->
+<!--            </if>-->
+<!--            <if test="entity.confirmState != null and entity.confirmState == 0 ">-->
+<!--                AND (-->
+<!--                (temp.confirmTypeFlag > 0 AND etc.confirm_state is null AND (temp.systemTotalAmount !=-->
+<!--                temp.otherTotalAmount and temp.systemTotalCount != temp.otherTotalCount))-->
+<!--                OR-->
+<!--                (temp.confirmTypeFlag = 0 AND etc.confirm_state is null)-->
+<!--                )-->
+<!--            </if>-->
+<!--            <if test="entity.confirmState == null ">-->
+<!--                AND (-->
+<!--                (temp.confirmTypeFlag > 0 AND etc.confirm_state is null AND (temp.systemTotalAmount !=-->
+<!--                temp.otherTotalAmount and temp.systemTotalCount != temp.otherTotalCount))-->
+<!--                OR-->
+<!--                (temp.confirmTypeFlag = 0 AND etc.confirm_state is null)-->
+<!--                OR-->
+<!--                etc.confirm_state = 1-->
+<!--                )-->
+<!--            </if>-->
+            AND temp.transDate &lt; DATE_FORMAT(now(), '%Y-%m-%d')
+        </where>
+        order by temp.transDate desc
+    </sql>
+
+    <select id="findSearchDataPage"
+            resultType="com.hgsoft.modules.bankbillcheck.entity.TBMerchantBillCheckExpPlatformEtc">
+        <include refid="select_base"/>
+    </select>
+
+    <select id="findSearchDataAll"
+            resultType="com.hgsoft.modules.bankbillcheck.entity.TBMerchantBillCheckExpPlatformEtc">
+        <include refid="select_base"/>
+    </select>
+
+    <select id="getSum" resultType="com.hgsoft.modules.bankbillcheck.entity.TBMerchantBillCheckExpPlatformEtc">
+        select
+        sum(base.systemTotalAmount) systemTotalAmount,
+        sum(base.systemTotalCount) systemTotalCount,
+        sum(base.otherTotalAmount) otherTotalAmount,
+        sum(base.otherTotalCount) otherTotalCount,
+        sum(base.confirmTypeFlag) confirmTypeFlag
+        from (<include refid="select_base"/>) base
+    </select>
+
+    <select id="getOne" resultType="com.hgsoft.modules.bankbillcheck.entity.TBMerchantBillCheckExpPlatformEtc">
+        select
+            trans_date as transDate,
+            merchant_group_id as merchantGroupId,
+            merchant_id as merchantId,
+            site_id as siteId,
+            total_count as totalCount,
+            total_amount as totalAmount,
+            remark ,
+            confirm_time as confirmTime,
+            confirm_state as confirmState,
+            confirm_man as confirmMan
+        from tb_merchant_bill_check_exp_platform_etc
+        <where>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND site_id = #{entity.siteId}
+            </if>
+            <if test="entity.transDate != null and entity.transDate!='' ">
+                AND trans_date = #{entity.transDate}
+            </if>
+        </where>
+    </select>
+
+    <insert id="insert">
+        INSERT INTO `tb_merchant_bill_check_exp_platform_etc`
+        (`trans_date`,
+         `merchant_group_id`,
+         `merchant_id`,
+         `site_id`,
+         `total_count`,
+         `total_amount`,
+         `remark`,
+         `confirm_time`,
+         `confirm_state`,
+          confirm_man)
+        VALUES
+        (#{transDate},
+         #{merchantGroupId},
+         #{merchantId},
+         #{siteId},
+         #{totalCount},
+         #{totalAmount},
+         #{remark},
+         #{confirmTime},
+         #{confirmState},
+         #{confirmMan})
+    </insert>
+    <update id="update">
+        update tb_merchant_bill_check_exp_platform_etc
+        set total_count = #{totalCount},
+            total_amount = #{totalAmount},
+            remark = concat(#{remark},';',remark),
+            confirm_time = #{confirmTime},
+            confirm_state = #{confirmState},
+            confirm_man = #{confirmMan}
+        where
+              merchant_group_id = #{merchantGroupId}
+        and   merchant_id = #{merchantId}
+        and   site_id = #{siteId}
+        and   trans_date = #{transDate}
+    </update>
+</mapper>

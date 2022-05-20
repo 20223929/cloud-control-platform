@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.report.mapper.SignStatisticReportMapper">
+
+	<resultMap type="com.hgsoft.modules.report.entity.SignStatisticReport" id="BaseResultMap" autoMapping="true">
+		<id column="SYS_ID" property="sysId" />
+    	<result column="STATISTICS_DATE" property="statisticsDate" />
+    	<result column="SIGN_INSTITUTION" property="signInstitution" />
+    	<result column="SIGN_BANK" property="signBank" />
+    	<result column="INCREASE_COUNT" property="increaseCount" />
+    	<result column="TOTAL_COUNT" property="totalCount" />
+    	<result column="CANCEL_COUNT" property="cancelCount" />
+    	<result column="NORMAL_OUNT" property="normalOunt" />
+	</resultMap>
+
+	<sql id="signStatisticReportColumns">
+		SYS_ID,
+		STATISTICS_DATE,
+		SIGN_INSTITUTION,
+		SIGN_BANK,
+		INCREASE_COUNT,
+		TOTAL_COUNT,
+		CANCEL_COUNT,
+		NORMAL_OUNT
+	</sql>
+
+	<select id="findPage" resultMap="BaseResultMap" >
+		SELECT 
+		<include refid="signStatisticReportColumns"/>
+		FROM TB_SIGN_STATISTIC_REPORT
+		<where>
+			<if test="entity.sumDateScope != null and entity.sumDateScope.length > 0">
+				STATISTICS_DATE BETWEEN #{entity.sumDateScope[0]} AND #{entity.sumDateScope[1]}
+			</if>
+		</where>
+		ORDER BY STATISTICS_DATE DESC,SIGN_INSTITUTION,SIGN_BANK
+	</select>
+
+	<select id="findListByCondition" resultMap="BaseResultMap" >
+		SELECT
+		<include refid="signStatisticReportColumns"/>
+		FROM TB_SIGN_STATISTIC_REPORT
+		<where>
+			<if test="entity.sumDateScope != null and entity.sumDateScope.length > 0">
+				STATISTICS_DATE BETWEEN #{entity.sumDateScope[0]} AND #{entity.sumDateScope[1]}
+			</if>
+		</where>
+		ORDER BY STATISTICS_DATE DESC,SIGN_INSTITUTION,SIGN_BANK
+	</select>
+
+	<select id="getSum" resultMap="BaseResultMap" >
+		SELECT SUM(INCREASE_COUNT) INCREASE_COUNT,SUM(TOTAL_COUNT) AS TOTAL_COUNT,SUM(CANCEL_COUNT) CANCEL_COUNT,SUM(NORMAL_OUNT) NORMAL_OUNT
+		FROM TB_SIGN_STATISTIC_REPORT
+		<where>
+			<if test="entity.sumDateScope != null and entity.sumDateScope.length > 0">
+				STATISTICS_DATE BETWEEN #{entity.sumDateScope[0]} AND #{entity.sumDateScope[1]}
+			</if>
+		</where>
+	</select>
+</mapper>

@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.merchant.mapper.MerchantGroupMapper">
+
+    <resultMap type="com.hgsoft.modules.merchant.entity.MerchantGroup" id="BaseResultMap" autoMapping="true">
+        <id column="platform_merchant_group_id" property="platformMerchantGroupId" />
+        <result column="bank_merchant_group_id" property="bankMerchantGroupId" />
+        <result column="name" property="name" />
+        <result column="contact" property="contact" />
+        <result column="tel" property="tel" />
+        <result column="creator" property="creator" />
+        <result column="createtime" property="createtime" />
+        <result column="modifier" property="modifier" />
+        <result column="modifytime" property="modifytime" />
+    </resultMap>
+
+    <select id="getIds" resultType="java.lang.String">
+        SELECT platform_merchant_group_id FROM tb_merchant_group
+    </select>
+</mapper>

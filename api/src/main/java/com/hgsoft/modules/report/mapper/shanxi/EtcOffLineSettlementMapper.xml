@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.hgsoft.modules.report.mapper.shanxi.EtcOffLineSettlementMapper">
+
+    <sql id="baseSqlForDetail">
+        SELECT
+        merchant_id merchantId,
+        site_id siteId,
+        case when clear_result &lt; 2 and clear_result is not null and settlement_confirm_state = 2 then merchant_real_fee else 0 end settlement_fee,
+        case when clear_result &lt; 2 and clear_result is not null and settlement_confirm_state = 2 then 1 else 0 end settlement_count,
+        case when clear_result &lt; 2 and clear_result is not null and settlement_confirm_state=1  then merchant_real_fee else 0 end deduction_fee,
+        case when clear_result &lt; 2 and clear_result is not null and settlement_confirm_state=1  then 1 else 0 end deduction_count,
+        case when clear_result is null then merchant_real_fee else 0 end undeduction_fee,
+        case when clear_result is null then 1 else 0 end undeduction_count,
+        merchant_real_fee fee,
+        1 mycount,
+        <choose>
+            <when test="entity.searchScope == 1">
+                DATE_FORMAT(trans_time,'%Y') transDate
+            </when>
+            <when test="entity.searchScope == 2">
+                DATE_FORMAT(trans_time,'%Y-%m') transDate
+            </when>
+            <otherwise>
+                DATE_FORMAT(trans_time,'%Y-%m-%d') transDate
+            </otherwise>
+        </choose>
+        FROM
+        tb_etc_transaction_eexit
+        <where>
+        <if test="entity.merchantId != null and entity.merchantId != ''">
+            AND merchant_id = #{entity.merchantId}
+        </if>
+        <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+            AND merchant_group_id = #{entity.merchantGroupId}
+        </if>
+        <if test="entity.siteId != null and entity.siteId != ''">
+            AND site_id = #{entity.siteId}
+        </if>
+        <if test="entity.beginSearchDate != null and entity.endSearchDate != null ">
+            AND trans_time BETWEEN #{entity.beginSearchDate} AND #{entity.endSearchDate}
+        </if>
+        </where>
+    </sql>
+
+    <sql id="baseSqlForSummary">
+        select
+            sum(c.settlement_fee)   settlementAmount,
+            sum(c.settlement_count) settlementCount,
+            sum(c.deduction_fee)    deductionAmount,
+            sum(c.deduction_count)  deductionCount,
+            sum(c.undeduction_fee)  unDeductionAmount,
+            sum(c.undeduction_count)  unDeductionCount,
+            sum(c.fee)  totalAmount,
+            sum(c.mycount)  totalCount,
+            c.transDate,
+            c.merchantId,
+            c.siteId
+        from (<include refid="baseSqlForDetail"/>) c
+        group by c.merchantId,c.siteId,c.transDate
+    </sql>
+
+    <select id="findSearchDataAll" resultType="com.hgsoft.modules.report.entity.shanxi.EtcOffLineSettlement">
+        <include refid="baseSqlForSummary"/>
+    </select>
+    <select id="findSearchDataPage" resultType="com.hgsoft.modules.report.entity.shanxi.EtcOffLineSettlement">
+        <include refid="baseSqlForSummary"/>
+    </select>
+    <select id="sumAll" resultType="com.hgsoft.modules.report.entity.shanxi.EtcOffLineSettlement">
+        select
+        sum(c.settlementAmount)   settlementAmount,
+        sum(c.settlementCount)    settlementCount,
+        sum(c.deductionAmount)    deductionAmount,
+        sum(c.deductionCount)     deductionCount,
+        sum(c.unDeductionAmount)  unDeductionAmount,
+        sum(c.unDeductionCount)   unDeductionCount,
+        sum(c.totalAmount)        totalAmount,
+        sum(c.totalCount)         totalCount
+        from (
+        <include refid="baseSqlForSummary"/>) c
+    </select>
+
+</mapper>

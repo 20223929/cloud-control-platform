@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.merchant.mapper.MerchantMapper">
+
+	<resultMap type="com.hgsoft.modules.merchant.entity.Merchant" id="BaseResultMap" autoMapping="true">
+		<id column="platform_merchant_id" property="platformMerchantId" />
+    	<result column="platform_merchant_group_id" property="platformMerchantGroupId" />
+    	<result column="center_merchant_id" property="centerMerchantId" />
+    	<result column="bank_merchant_id" property="bankMerchantId" />
+    	<result column="service_type" property="serviceType" />
+    	<result column="name" property="name" />
+    	<result column="certificate_type" property="certificateType" />
+    	<result column="taxpayer_code" property="taxpayerCode" />
+    	<result column="credit_code" property="creditCode" />
+    	<result column="tel" property="tel" />
+    	<result column="contact" property="contact" />
+    	<result column="address" property="address" />
+    	<result column="bank" property="bank" />
+    	<result column="bank_addr" property="bankAddr" />
+    	<result column="bank_account" property="bankAccount" />
+    	<result column="bank_rate" property="bankRate" />
+    	<result column="center_rate" property="centerRate" />
+    	<result column="center_settlement_type" property="centerSettlementType" />
+    	<result column="center_settlement_cycle" property="centerSettlementCycle" />
+    	<result column="creator" property="creator" />
+    	<result column="createtime" property="createtime" />
+    	<result column="modifier" property="modifier" />
+    	<result column="modifytime" property="modifytime" />
+	</resultMap>
+
+</mapper>

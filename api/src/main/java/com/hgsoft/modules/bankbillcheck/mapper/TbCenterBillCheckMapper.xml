@@ -1,0 +1,628 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.bankbillcheck.mapper.TbCenterBillCheckMapper">
+
+    <resultMap type="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck" id="BaseResultMap" autoMapping="true">
+        <id column="trans_date" property="transDate"/>
+        <id column="merchant_group_id" property="merchantGroupId"/>
+        <id column="merchant_id" property="merchantId"/>
+        <id column="site_id" property="siteId"/>
+        <result column="confirm_total_count" property="confirmTotalCount"/>
+        <result column="confirm_total_amount" property="confirmTotalAmount"/>
+        <result column="confirm_man" property="confirmMan"/>
+        <result column="confirm_time" property="confirmTime"/>
+        <result column="remark" property="remark"/>
+        <result column="second_confirm_man" property="secondConfirmMan"/>
+        <result column="second_confirm_time" property="secondConfirmTime"/>
+        <result column="second_confirm_remark" property="secondConfirmRemark"/>
+    </resultMap>
+
+    <sql id="tbCenterBillCheckColumns">
+        a
+        .
+        trans_date
+        AS "transDate",
+		a.merchant_group_id AS "merchantGroupId",
+		a.merchant_id AS "merchantId",
+		a.site_id AS "siteId",
+		a.confirm_total_count AS "confirmTotalCount",
+		a.confirm_total_amount AS "confirmTotalAmount",
+		a.confirm_man AS "confirmMan",
+		a.confirm_time AS "confirmTime",
+		a.remark AS "remark",
+		a.second_confirm_man AS "secondConfirmMan",
+		a.second_confirm_time AS "secondConfirmTime",
+		a.second_confirm_remark AS "secondConfirmRemark"
+    </sql>
+
+    <sql id="tbCenterBillCheckJoins">
+    </sql>
+
+
+    <select id="getById" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        SELECT
+        <include refid="tbCenterBillCheckColumns"/>
+        FROM tb_center_bill_check a
+        <include refid="tbCenterBillCheckJoins"/>
+        WHERE a.transDate = #{trans_date} and a.merchantGroupId = #{merchant_group_id} and a.merchantId = #{merchant_id}
+        and a.siteId = #{site_id}
+    </select>
+
+
+    <select id="getByEntity" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        SELECT
+        <include refid="tbCenterBillCheckColumns"/>
+        FROM tb_center_bill_check a
+        <include refid="tbCenterBillCheckJoins"/>
+        WHERE a.transDate = #{trans_date} and a.merchantGroupId = #{merchant_group_id} and a.merchantId = #{merchant_id}
+        and a.siteId = #{site_id}
+    </select>
+
+    <select id="findPage" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        SELECT
+        <include refid="tbCenterBillCheckColumns"/>
+        FROM tb_center_bill_check a
+        <include refid="tbCenterBillCheckJoins"/>
+        <where>
+
+            ${entity.dataScope}
+            <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+                AND a.trans_date BETWEEN #{entity.beginTransDate} AND #{entity.endTransDate}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND a.merchant_id = #{entity.merchantId}
+            </if>
+        </where>
+    </select>
+
+    <select id="findList" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        SELECT
+        <include refid="tbCenterBillCheckColumns"/>
+        FROM tb_center_bill_check a
+        <include refid="tbCenterBillCheckJoins"/>
+        <where>
+
+            ${dataScope}
+            <if test="beginTransDate != null and endTransDate != null ">
+                AND a.trans_date BETWEEN #{beginTransDate} AND #{endTransDate}
+            </if>
+            <if test="merchantId != null and merchantId != ''">
+                AND a.merchant_id = #{merchantId}
+            </if>
+        </where>
+    </select>
+
+    <select id="findAllList" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        SELECT
+        <include refid="tbCenterBillCheckColumns"/>
+        FROM tb_center_bill_check a
+        <include refid="tbCenterBillCheckJoins"/>
+        <where>
+
+            ${dataScope}
+        </where>
+    </select>
+
+    <insert id="insertEntity">
+        INSERT INTO tb_center_bill_check(trans_date,
+                                         merchant_group_id,
+                                         merchant_id,
+                                         site_id,
+                                         confirm_total_count,
+                                         confirm_total_amount,
+                                         confirm_man,
+                                         confirm_time,
+                                         remark,
+                                         second_confirm_man,
+                                         second_confirm_time,
+                                         second_confirm_remark)
+        VALUES (#{transDate},
+                #{merchantGroupId},
+                #{merchantId},
+                #{siteId},
+                #{confirmTotalCount},
+                #{confirmTotalAmount},
+                #{confirmMan},
+                #{confirmTime},
+                #{remark},
+                #{secondConfirmMan},
+                #{secondConfirmTime},
+                #{secondConfirmRemark})
+    </insert>
+
+    <update id="updateEntity">
+        UPDATE tb_center_bill_check
+        <trim prefix="set" suffixOverrides=",">
+            trans_date = #{transDate},
+            merchant_group_id = #{merchantGroupId},
+            merchant_id = #{merchantId},
+            site_id = #{siteId},
+            confirm_total_count = #{confirmTotalCount},
+            confirm_total_amount = #{confirmTotalAmount},
+            confirm_man = #{confirmMan},
+            confirm_time = #{confirmTime},
+            remark = #{remark},
+            second_confirm_man = #{secondConfirmMan},
+            second_confirm_time = #{secondConfirmTime},
+            second_confirm_remark = #{secondConfirmRemark}
+        </trim>
+        WHERE a.transDate = {"#"}{trans_date} and a.merchantGroupId = {"#"}{merchant_group_id} and a.merchantId =
+        {"#"}{merchant_id} and a.siteId = {"#"}{site_id}
+    </update>
+
+
+    <delete id="removeById">
+        DELETE
+        FROM tb_center_bill_check
+        WHERE a.transDate = {"#"}{trans_date}
+          and a.merchantGroupId = {"#"}{merchant_group_id}
+          and a.merchantId = {"#"}{merchant_id}
+          and a.siteId = {"#"}{site_id}
+    </delete>
+
+    <!--逻辑删除-->
+    <update id="deleteByLogic">
+        UPDATE tb_center_bill_check
+        SET del_flag = #{DEL_FLAG_DELETE}
+        WHERE transDate = #{trans_date}
+          and merchantGroupId = #{merchant_group_id}
+          and merchantId = #{merchant_id}
+          and siteId = #{site_id}
+    </update>
+
+
+
+    <select id="findSearchDataPage" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        SELECT
+        e.trans_date AS 'transDate',
+        e.merchant_group_id AS 'merchantGroupId',
+        e.merchant_id AS 'merchantId',
+        e.site_id AS 'siteId',
+        e.centerTotalAmount,
+        e.centerTotalCount,
+        b.confirm_total_amount as confirmTotalAmount,
+        b.confirm_total_count as confirmTotalCount,
+        b.confirm_man AS 'confirmMan',
+        b.confirm_time AS 'confirmTime',
+        b.remark AS 'remark',
+        b.second_confirm_man AS 'secondConfirmMan',
+        b.second_confirm_time AS 'secondConfirmTime',
+        b.second_confirm_remark AS 'secondConfirmRemark',
+        case
+        when b.confirm_man is null then 0
+        when b.second_confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount then 3
+        when b.confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount then 1
+        when b.confirm_man is not null and e.centerTotalAmount !=b.confirm_total_amount then 2
+        end as confirmState
+        FROM
+        (SELECT
+        trans_date,
+        merchant_group_id,
+        merchant_id,
+        site_id,
+        count(1) centerTotalCount,
+        SUM(merchant_real_fee) centerTotalAmount
+        FROM
+        (SELECT
+        DATE_FORMAT(c.trans_time, '%Y-%m-%d') AS trans_date,
+        c.merchant_group_id,
+        c.merchant_id,
+        c.site_id,
+        c.merchant_real_fee merchant_real_fee
+        FROM
+        tb_etc_transaction_eexit c
+        <where>
+            ${entity.dataScope}
+            <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+                AND c.trans_time BETWEEN #{entity.beginTransDate} AND #{entity.endTransDate}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND c.merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND c.merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND c.site_id = #{entity.siteId}
+            </if>
+            <if test="entity.transDate != null and entity.transDate!=''">
+                AND (c.trans_time &gt;= STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d') and c.trans_time &lt;
+                date_add(STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d'),interval 1 day))
+            </if>
+        </where>
+        ) t
+        GROUP BY DATE_FORMAT(t.trans_date, '%Y-%m-%d') , t.merchant_group_id , t.merchant_id , t.site_id ) e
+        LEFT JOIN
+        tb_center_bill_check b
+        ON b.merchant_group_id = e.merchant_group_id
+        AND b.merchant_id = e.merchant_id
+        AND b.site_id = e.site_id
+        AND b.trans_date = e.trans_date
+        <where>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  0">
+                AND b.confirm_man is null
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  1">
+                AND b.confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount
+                and b.second_confirm_man is null
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  2">
+                AND b.confirm_man is not null and e.centerTotalAmount !=b.confirm_total_amount
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  3">
+                AND b.second_confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount
+            </if>
+        </where>
+    </select>
+    <sql id="findSearchDataAllSql">
+        SELECT
+        e.trans_date AS 'transDate',
+        e.merchant_group_id AS 'merchantGroupId',
+        e.merchant_id AS 'merchantId',
+        e.site_id AS 'siteId',
+        e.centerTotalAmount,
+        e.centerTotalCount,
+        b.confirm_total_amount as confirmTotalAmount,
+        b.confirm_total_count as confirmTotalCount,
+        b.confirm_man AS 'confirmMan',
+        b.confirm_time AS 'confirmTime',
+        b.remark AS 'remark',
+        b.second_confirm_man AS 'secondConfirmMan',
+        b.second_confirm_time AS 'secondConfirmTime',
+        b.second_confirm_remark AS 'secondConfirmRemark',
+        case
+        when b.confirm_man is null then 0
+        when b.second_confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount then 3
+        when b.confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount then 1
+        when b.confirm_man is not null and e.centerTotalAmount !=b.confirm_total_amount then 2
+        end as confirmState
+        FROM
+        (SELECT
+        trans_date,
+        merchant_group_id,
+        merchant_id,
+        site_id,
+        count(1) centerTotalCount,
+        SUM(merchant_real_fee) centerTotalAmount
+        FROM
+        (SELECT
+        DATE_FORMAT(c.trans_time, '%Y-%m-%d') AS trans_date,
+        c.merchant_group_id,
+        c.merchant_id,
+        c.site_id,
+        c.merchant_real_fee merchant_real_fee
+        FROM
+        tb_etc_transaction_eexit c
+        <where>
+            <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+                AND c.trans_time BETWEEN #{entity.beginTransDate} AND #{entity.endTransDate}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND c.merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND c.merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND c.site_id = #{entity.siteId}
+            </if>
+            <if test="entity.transDate != null and entity.transDate!=''">
+                AND (c.trans_time &gt;= STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d') and c.trans_time &lt;
+                date_add(STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d'),interval 1 day))
+            </if>
+        </where>
+        ) t
+        GROUP BY DATE_FORMAT(t.trans_date, '%Y-%m-%d') , t.merchant_group_id , t.merchant_id , t.site_id ) e
+        LEFT JOIN
+        tb_center_bill_check b
+        ON b.merchant_group_id = e.merchant_group_id
+        AND b.merchant_id = e.merchant_id
+        AND b.site_id = e.site_id
+        AND b.trans_date = e.trans_date
+        <where>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  0">
+                AND b.confirm_man is null
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  1">
+                AND b.confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount
+                AND b.second_confirm_man is null
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  2">
+                AND b.confirm_man is not null and e.centerTotalAmount !=b.confirm_total_amount
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  3">
+                AND b.second_confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount
+            </if>
+        </where>
+    </sql>
+    <select id="findSearchDataAll" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        <include refid="findSearchDataAllSql"/>
+    </select>
+    <select id="getSum" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        select
+        sum(a.centerTotalAmount) as centerTotalAmount,
+        sum(a.centerTotalCount) as centerTotalCount,
+        sum(a.confirmTotalCount) as confirmTotalCount,
+        sum(a.confirmTotalAmount) as confirmTotalAmount
+        from (<include refid="findSearchDataAllSql"/>) a
+    </select>
+    <insert id="insertSumRecord" parameterType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        INSERT INTO tb_center_bill_check
+        (trans_date,
+        merchant_group_id,
+        merchant_id,
+        site_id,
+        confirm_total_count,
+        confirm_total_amount,
+        confirm_man,
+        confirm_time,
+        remark,
+        second_confirm_man,
+        second_confirm_time,
+        second_confirm_remark)
+        select
+        a.trans_date,
+        a.merchant_group_id,
+        a.merchant_id,
+        a.site_id,
+        a.confirm_total_count,
+        a.confirm_total_amount,
+        #{entity.confirmMan} as confirm_man,
+        now() as confirm_time,
+        #{entity.remark} as remark,
+        null as second_confirm_man,
+        null as second_confirm_time,
+        null as second_confirm_remark
+        from (
+        select DATE_FORMAT(c.trans_time, '%Y-%m-%d') as trans_date,
+        c.merchant_group_id,
+        c.merchant_id,
+        c.site_id,
+        count(1) confirm_total_count,
+        sum(c.merchant_real_fee) confirm_total_amount
+        from tb_etc_transaction_eexit c
+        <where>
+            <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+                AND c.trans_time BETWEEN #{entity.beginTransDate} AND #{entity.endTransDate}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND c.merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND c.merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND c.site_id = #{entity.siteId}
+            </if>
+            <if test="entity.transDate != null and entity.transDate!=''">
+                AND (c.trans_time &gt;= STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d') and c.trans_time &lt;
+                date_add(STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d'),interval 1 day))
+            </if>
+        </where>
+        group by trans_date,merchant_group_id,merchant_id,site_id
+        )a
+    </insert>
+    <insert id="insertDetailRecord" parameterType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        INSERT INTO tb_center_bill_check_detail
+        (trans_date,
+        merchant_group_id,
+        merchant_id,
+        site_id,
+        equipment_id,
+        confirm_total_count,
+        confirm_total_amount)
+        select
+        a.trans_date,
+        a.merchant_group_id,
+        a.merchant_id,
+        a.site_id,
+        a.equipment_id,
+        a.confirm_total_count,
+        a.confirm_total_amount
+        from (
+        select DATE_FORMAT(c.trans_time, '%Y-%m-%d') as trans_date,
+        c.merchant_group_id,
+        c.merchant_id,
+        c.site_id,
+        c.equipment_id,
+        count(1) confirm_total_count,
+        sum(c.merchant_real_fee) confirm_total_amount
+        from tb_etc_transaction_eexit c
+        <where>
+            <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+                AND c.trans_time BETWEEN #{entity.beginTransDate} AND #{entity.endTransDate}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND c.merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND c.merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND c.site_id = #{entity.siteId}
+            </if>
+            <if test="entity.transDate != null and entity.transDate!=''">
+                AND (c.trans_time &gt;= STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d') and c.trans_time &lt;
+                date_add(STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d'),interval 1 day))
+            </if>
+        </where>
+        group by trans_date,merchant_group_id,merchant_id,site_id,equipment_id
+        ) a
+    </insert>
+
+    <update id="updateSumForSecondConfirm" parameterType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        update tb_center_bill_check d
+        INNER JOIN
+        (
+        select DATE_FORMAT(c.trans_time, '%Y-%m-%d') as trans_date,
+        c.merchant_group_id,
+        c.merchant_id,
+        c.site_id,
+        count(1) confirm_total_count,
+        sum(c.merchant_real_fee) confirm_total_amount
+        from tb_etc_transaction_eexit c
+        <where>
+            <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+                AND c.trans_time BETWEEN #{entity.beginTransDate} AND #{entity.endTransDate}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND c.merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND c.merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND c.site_id = #{entity.siteId}
+            </if>
+            <if test="entity.transDate != null and entity.transDate!=''">
+                AND (c.trans_time &gt;= STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d') and c.trans_time &lt;
+                date_add(STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d'),interval 1 day))
+            </if>
+        </where>
+        group by DATE_FORMAT(c.trans_time, '%Y-%m-%d'),c.merchant_group_id,c.merchant_id,c.site_id,c.equipment_id
+        ) s on s.trans_date = d.trans_date
+        and s.merchant_group_id = d.merchant_group_id
+        and s.merchant_id = d.merchant_id
+        and s.site_id = d.site_id
+        set d.confirm_total_count = s.confirm_total_count,
+        d.confirm_total_amount = s.confirm_total_amount,
+        d.second_confirm_man = #{entity.secondConfirmMan},
+        d.second_confirm_time = now(),
+        d.second_confirm_remark = #{entity.secondConfirmRemark}
+    </update>
+    <update id="updateDetailForSecondConfirm" parameterType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheck">
+        update tb_center_bill_check_detail d
+        INNER JOIN
+        (
+        select DATE_FORMAT(c.trans_time, '%Y-%m-%d') as trans_date,
+        c.merchant_group_id,
+        c.merchant_id,
+        c.site_id,
+        c.equipment_id,
+        count(1) confirm_total_count,
+        sum(c.merchant_real_fee) confirm_total_amount
+        from tb_etc_transaction_eexit c
+        <where>
+            <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+                AND c.trans_time BETWEEN #{entity.beginTransDate} AND #{entity.endTransDate}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND c.merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND c.merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND c.site_id = #{entity.siteId}
+            </if>
+            <if test="entity.transDate != null and entity.transDate!=''">
+                AND (c.trans_time &gt;= STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d') and c.trans_time &lt;
+                date_add(STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d'),interval 1 day))
+            </if>
+        </where>
+        group by DATE_FORMAT(c.trans_time, '%Y-%m-%d'),c.merchant_group_id,c.merchant_id,c.site_id,c.equipment_id
+        ) s on s.trans_date = d.trans_date
+        and s.merchant_group_id = d.merchant_group_id
+        and s.merchant_id = d.merchant_id
+        and s.site_id = d.site_id
+        and s.equipment_id = d.equipment_id
+        set d.confirm_total_count = s.confirm_total_count,
+        d.confirm_total_amount = s.confirm_total_amount
+    </update>
+
+    <select id="findAllEexitCount" resultType="java.lang.Long">
+        select count(1) from (
+        SELECT
+        DATE_FORMAT(c.trans_time, '%Y-%m-%d') AS trans_date,
+        c.*
+        FROM
+        tb_etc_transaction_eexit c
+        <where>
+            <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+                AND c.trans_time BETWEEN #{entity.beginTransDate} AND #{entity.endTransDate}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND c.merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND c.merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND c.site_id = #{entity.siteId}
+            </if>
+            <if test="entity.transDate != null and entity.transDate!=''">
+                AND (c.trans_time &gt;= STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d') and c.trans_time &lt;
+                date_add(STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d'),interval 1 day))
+            </if>
+        </where>) e
+        LEFT JOIN
+        tb_center_bill_check b
+        ON b.merchant_group_id = e.merchant_group_id
+        AND b.merchant_id = e.merchant_id
+        AND b.site_id = e.site_id
+        AND b.trans_date = e.trans_date
+        <where>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  0">
+                AND b.confirm_man is null
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  1">
+                AND b.confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount
+                and b.second_confirm_man is null
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  2">
+                AND b.confirm_man is not null and e.centerTotalAmount !=b.confirm_total_amount
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  3">
+                AND b.second_confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount
+            </if>
+        </where>
+    </select>
+
+    <select id="findAllEexit" resultType="com.hgsoft.modules.bankbillcheck.entity.TbEtcTransactionEexit">
+        select e.* from (
+        SELECT
+        DATE_FORMAT(c.trans_time, '%Y-%m-%d') AS trans_date,
+        c.*
+        FROM
+        tb_etc_transaction_eexit c
+        <where>
+            <if test="entity.beginTransDate != null and entity.endTransDate != null ">
+                AND c.trans_time BETWEEN #{entity.beginTransDate} AND #{entity.endTransDate}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND c.merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND c.merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND c.site_id = #{entity.siteId}
+            </if>
+            <if test="entity.transDate != null and entity.transDate!=''">
+                AND (c.trans_time &gt;= STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d') and c.trans_time &lt;
+                date_add(STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d'),interval 1 day))
+            </if>
+        </where>) e
+        LEFT JOIN
+        tb_center_bill_check b
+        ON b.merchant_group_id = e.merchant_group_id
+        AND b.merchant_id = e.merchant_id
+        AND b.site_id = e.site_id
+        AND b.trans_date = e.trans_date
+        <where>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  0">
+                AND b.confirm_man is null
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  1">
+                AND b.confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount
+                and b.second_confirm_man is null
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  2">
+                AND b.confirm_man is not null and e.centerTotalAmount !=b.confirm_total_amount
+            </if>
+            <if test="entity.confirmState != null and entity.confirmState!='' and entity.confirmState ==  3">
+                AND b.second_confirm_man is not null and e.centerTotalAmount =b.confirm_total_amount
+            </if>
+        </where>
+    </select>
+</mapper>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.agent.mapper.AgentMapper">
+
+    <resultMap type="com.hgsoft.modules.agent.entity.Agent" id="BaseResultMap" autoMapping="true">
+        <id column="sys_id" property="sysId"/>
+        <result column="agent_no" property="agentNo" />
+        <result column="agent_name" property="agentName" />
+        <result column="certificate_type" property="certificateType" />
+        <result column="taxpayer_code" property="taxpayerCode" />
+        <result column="credit_code" property="creditCode" />
+        <result column="bank" property="bank" />
+        <result column="bank_addr" property="bankAddr"/>
+        <result column="bank_account" property="bankAccount" />
+        <result column="createtime" property="createTime" />
+        <result column="modifytime" property="modifyTime" />
+        <result column="remark" property="remark" />
+    </resultMap>
+
+    <select id="findPage" resultMap="BaseResultMap">
+        select * from tb_agent
+        <where>
+            <if test="entity.certificateType != null">
+                AND certificate_type = #{entity.certificateType}
+            </if>
+            <if test="entity.agentName != null and entity.agentName != ''">
+                AND agent_name like concat('%',#{entity.agentName},'%')
+            </if>
+            <if test="entity.creditCode != null and entity.creditCode != ''">
+                AND credit_code like concat('%',#{entity.creditCode},'%')
+            </if>
+        </where>
+        order by agent_no
+    </select>
+
+    <select id="findList" resultMap="BaseResultMap" parameterType="com.hgsoft.modules.agent.entity.Agent">
+        select * from tb_agent
+        <where>
+            <if test="certificateType != null">
+                AND certificate_type = #{certificateType}
+            </if>
+            <if test="agentName != null and agentName != ''">
+                AND agent_name like concat('%',#{agentName},'%')
+            </if>
+            <if test="creditCode != null and creditCode != ''">
+                AND credit_code like concat('%',#{creditCode},'%')
+            </if>
+        </where>
+        order by agent_no
+    </select>
+</mapper>

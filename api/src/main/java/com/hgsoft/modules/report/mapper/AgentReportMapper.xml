@@ -1,0 +1,216 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.report.mapper.AgentReportMapper">
+
+	<resultMap type="com.hgsoft.modules.report.entity.AgentReport" id="BaseResultMap" autoMapping="true">
+		<id column="sys_id" property="sysId" />
+    	<result column="trx_date" property="trxDate" />
+    	<result column="toll_settlement_date" property="tollSettlementDate" />
+    	<result column="merchant_id" property="merchantId" />
+    	<result column="merchant_name" property="merchantName" />
+    	<result column="site_id" property="siteId" />
+    	<result column="site_name" property="siteName" />
+    	<result column="toll_settlement_interval" property="tollSettlementInterval" />
+    	<result column="total_settlement_cnt" property="totalSettlementCnt" />
+    	<result column="total_settlement_amt" property="totalSettlementAmt" />
+    	<result column="reject_settlement_cnt" property="rejectSettlementCnt" />
+    	<result column="reject_settlement_amt" property="rejectSettlementAmt" />
+    	<result column="actual_settlement_amt" property="actualSettlementAmt" />
+    	<result column="service_rate" property="serviceRate" />
+    	<result column="service_type" property="serviceType" />
+    	<result column="service_amt" property="serviceAmt" />
+    	<result column="center_service_rate" property="centerServiceRate" />
+    	<result column="center_service_amt" property="centerServiceAmt" />
+    	<result column="agent_rate" property="agentRate" />
+    	<result column="agent_amt" property="agentAmt" />
+    	<result column="merchant_group_id" property="merchantGroupId" />
+	</resultMap>
+
+	<sql id="agentReportColumns">
+		a.sys_id AS "sysId",
+		a.trx_date AS "trxDate",
+		a.toll_settlement_date AS "tollSettlementDate",
+		a.merchant_id AS "merchantId",
+		a.merchant_name AS "merchantName",
+		a.site_id AS "siteId",
+		a.site_name AS "siteName",
+		a.toll_settlement_interval AS "tollSettlementInterval",
+		a.total_settlement_cnt AS "totalSettlementCnt",
+		a.total_settlement_amt AS "totalSettlementAmt",
+		a.reject_settlement_cnt AS "rejectSettlementCnt",
+		a.reject_settlement_amt AS "rejectSettlementAmt",
+		a.actual_settlement_amt AS "actualSettlementAmt",
+		a.service_rate AS "serviceRate",
+		a.service_type AS "serviceType",
+		a.service_amt AS "serviceAmt",
+		a.center_service_rate AS "centerServiceRate",
+		a.center_service_amt AS "centerServiceAmt",
+		a.agent_rate AS "agentRate",
+		a.agent_amt AS "agentAmt",
+		a.merchant_group_id AS "merchantGroupId"
+	</sql>
+
+	<sql id="agentReportJoins">
+	</sql>
+
+
+	<select id="getById" resultType="com.hgsoft.modules.report.entity.AgentReport" >
+		SELECT
+			<include refid="agentReportColumns"/>
+		FROM tb_settlement_report a
+		<include refid="agentReportJoins"/>
+		WHERE a.sysId = #{sys_id}
+	</select>
+
+
+	<select id="getByEntity" resultType="com.hgsoft.modules.report.entity.AgentReport" >
+		SELECT
+			<include refid="agentReportColumns"/>
+		FROM tb_settlement_report a
+		<include refid="agentReportJoins"/>
+		WHERE a.sysId = #{sys_id}
+	</select>
+
+	<select id="findPageByCondition" resultType="com.hgsoft.modules.report.entity.AgentReport" >
+		SELECT
+			<include refid="agentReportColumns" />
+		FROM tb_settlement_report a
+		<include refid="agentReportJoins"/>
+		<where>
+			
+			<if test="entity.beginTrxDate != null and entity.endTrxDate != null ">
+				<choose>
+					<when test="entity.tollSettlementInterval == null">
+						AND a.trx_date BETWEEN #{entity.beginTrxDate} AND #{entity.endTrxDate}
+						or a.trx_date BETWEEN left(#{entity.beginTrxDate},7) and left(#{entity.endTrxDate},7)
+					</when>
+				</choose>
+	        </if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND a.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND a.merchant_id = #{entity.merchantId}
+	        </if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND a.site_id = #{entity.siteId}
+			</if>
+			<if test="entity.tollSettlementInterval != null and entity.tollSettlementInterval != ''">
+				AND a.toll_settlement_interval = #{entity.tollSettlementInterval}
+	        </if>
+			<if test="entity.serviceType != null and entity.serviceType != ''">
+				AND a.service_type = #{entity.serviceType}
+	        </if>
+	        <if test="siteIds != null">
+				AND a.site_id in
+				<foreach collection="siteIds" item="item" index="index" open="(" close=")" separator=",">
+					#{item}
+				</foreach>
+			</if>
+		</where>
+	</select>
+
+	<select id="findListByCondition" resultType="com.hgsoft.modules.report.entity.AgentReport" >
+		SELECT
+			<include refid="agentReportColumns"/>
+		FROM tb_settlement_report a
+		<include refid="agentReportJoins"/>
+		<where>
+			
+    		<if test="entity.beginTrxDate != null and entity.endTrxDate != null ">
+    			<choose>
+					<when test="entity.tollSettlementInterval == null">
+						AND a.trx_date BETWEEN #{entity.beginTrxDate} AND #{entity.endTrxDate}
+						or a.trx_date BETWEEN left(#{entity.beginTrxDate},7) and left(#{entity.endTrxDate},7)
+					</when>
+				</choose>
+    		</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND a.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+    		<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND a.merchant_id = #{entity.merchantId}
+    		</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND a.site_id = #{entity.siteId}
+			</if>
+    		<if test="entity.tollSettlementInterval != null">
+				AND a.toll_settlement_interval = #{entity.tollSettlementInterval}
+    		</if>
+    		<if test="entity.serviceType != null">
+				AND a.service_type = #{entity.serviceType}
+    		</if>
+			<if test="siteIds != null">
+				AND a.site_id in
+				<foreach collection="siteIds" item="item" index="index" open="(" close=")" separator=",">
+					#{item}
+				</foreach>
+			</if>
+		</where>
+	</select>
+
+	<select id="findAllList" resultType="com.hgsoft.modules.report.entity.AgentReport" >
+		SELECT
+			<include refid="agentReportColumns"/>
+		FROM tb_settlement_report a
+		<include refid="agentReportJoins"/>
+		<where>
+			
+			${dataScope}
+		</where>
+	</select>
+
+	<!-- 根据实体名称和字段名称和字段值获取唯一记录 -->
+	<select id="findUniqueByProperty" resultType="com.hgsoft.modules.report.entity.AgentReport" statementType="STATEMENT">
+		select * FROM tb_settlement_report  where ${propertyName} = '${value}'
+	</select>
+
+	<!-- 获取合计汇总信息 -->
+	<select id="getSum" resultType="com.hgsoft.modules.report.entity.AgentReport">
+		SELECT
+			sum(total_settlement_cnt) totalSettlementCnt,
+			sum(total_settlement_amt) totalSettlementAmt,
+			sum(reject_settlement_cnt) rejectSettlementCnt,
+			sum(reject_settlement_amt) rejectSettlementAmt,
+			sum(actual_settlement_amt) actualSettlementAmt,
+			sum(service_amt) serviceAmt,
+			sum(agent_amt) agentAmt,
+			sum(center_service_amt) centerServiceAmt
+		FROM tb_settlement_report a
+		<include refid="agentReportJoins"/>
+		<where>
+
+			${entity.dataScope}
+			<if test="entity.beginTrxDate != null and entity.endTrxDate != null ">
+				<choose>
+					<when test="entity.tollSettlementInterval == null">
+						AND a.trx_date BETWEEN #{entity.beginTrxDate} AND #{entity.endTrxDate}
+						or a.trx_date BETWEEN left(#{entity.beginTrxDate},7) and left(#{entity.endTrxDate},7)
+					</when>
+				</choose>
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND a.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND a.merchant_id = #{entity.merchantId}
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND a.site_id = #{entity.siteId}
+			</if>
+			<if test="entity.tollSettlementInterval != null and entity.tollSettlementInterval != ''">
+				AND a.toll_settlement_interval = #{entity.tollSettlementInterval}
+			</if>
+			<if test="entity.serviceType != null and entity.serviceType != ''">
+				AND a.service_type = #{entity.serviceType}
+			</if>
+			<if test="siteIds != null">
+				AND a.site_id in
+				<foreach collection="siteIds" item="item" index="index" open="(" close=")" separator=",">
+					#{item}
+				</foreach>
+			</if>
+		</where>
+	</select>
+
+</mapper>

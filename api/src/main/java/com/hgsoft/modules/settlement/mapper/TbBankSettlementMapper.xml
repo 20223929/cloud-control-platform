@@ -1,0 +1,175 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.settlement.mapper.TbBankSettlementMapper">
+
+	<resultMap type="com.hgsoft.modules.settlement.entity.TbBankSettlement" id="BaseResultMap" autoMapping="true">
+		<id column="BANK_TRX_DATE" property="bankTransDate" />
+		<id column="MERCHANT_NO" property="merchantId" />
+    	<id column="SCENE_TYPE" property="serviceType" />
+		<result column="MERCHANT_NAME" property="merchantName"/>
+    	<result column="merchant_recv_fee" property="merchantRecvFee" />
+		<result column="real_fee" property="realFee"/>
+    	<result column="deduction_total_count" property="deductionTotalCount" />
+    	<result column="deduction_total_fee" property="deductionTotalFee" />
+    	<result column="discount_total_fee" property="discountTotalFee" />
+    	<result column="refund_total_count" property="refundTotalCount" />
+    	<result column="refund_total_fee" property="refundTotalFee" />
+    	<result column="bank_service_total_fee" property="bankServiceTotalFee" />
+		<result column="TRX_PLACE" property="trxPlace"/>
+	</resultMap>
+
+	<select id="findPage" resultMap="BaseResultMap">
+		SELECT A.BANK_TRX_DATE,A.SCENE_TYPE,A.MERCHANT_NO,A.TRX_PLACE,B.NAME MERCHANT_NAME,SUM(CASE WHEN A.TRX_TYPE = '1' THEN 1 ELSE 0 END) DEDUCTION_TOTAL_COUNT,
+			   SUM(CASE WHEN A.TRX_TYPE = '1' THEN A.TRX_AMOUNT ELSE 0 END) DEDUCTION_TOTAL_FEE,SUM(CASE WHEN A.TRX_TYPE = '1' THEN REDUCE_AMT ELSE 0 END) DISCOUNT_TOTAL_FEE,
+			   SUM(CASE WHEN A.TRX_TYPE = '2' THEN 1 ELSE 0 END) REFUND_TOTAL_COUNT,SUM(CASE WHEN A.TRX_TYPE = '2' THEN A.TRX_AMOUNT ELSE 0 END) REFUND_TOTAL_FEE,
+			   SUM(ROUND(A.TRX_AMOUNT * B.BANK_RATE,0)) BANK_SERVICE_TOTAL_FEE
+		FROM PAY_BILL A LEFT JOIN TB_MERCHANT B ON A.MERCHANT_NO = B.BANK_MERCHANT_ID
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND A.BANK_TRX_DATE BETWEEN #{entity.timeScope[0]} AND #{entity.timeScope[1]}
+			</if>
+			<if test="entity.serviceType != null">
+				AND A.SCENE_TYPE = #{entity.serviceType}
+			</if>
+			<if test="entity.userMerchantParam != null">
+				AND
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open="( A.TRX_PLACE LIKE " close=")" separator=" OR ">
+							CONCAT(#{item},'%')
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						A.TRX_PLACE LIKE CONCAT(#{entity.userMerchantParam.searchIds[0]},'%')
+					</when>
+					<otherwise>
+						A.TRX_PLACE = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		GROUP BY A.BANK_TRX_DATE,A.SCENE_TYPE,A.MERCHANT_NO,A.TRX_PLACE,B.NAME
+		ORDER BY A.BANK_TRX_DATE,A.MERCHANT_NO,A.SCENE_TYPE
+	</select>
+
+	<select id="findList" resultMap="BaseResultMap">
+		SELECT A.BANK_TRX_DATE,A.SCENE_TYPE,A.MERCHANT_NO,A.TRX_PLACE,B.NAME MERCHANT_NAME,SUM(CASE WHEN A.TRX_TYPE = '1' THEN 1 ELSE 0 END) DEDUCTION_TOTAL_COUNT,
+		SUM(CASE WHEN A.TRX_TYPE = '1' THEN A.TRX_AMOUNT ELSE 0 END) DEDUCTION_TOTAL_FEE,SUM(CASE WHEN A.TRX_TYPE = '1' THEN REDUCE_AMT ELSE 0 END) DISCOUNT_TOTAL_FEE,
+		SUM(CASE WHEN A.TRX_TYPE = '2' THEN 1 ELSE 0 END) REFUND_TOTAL_COUNT,SUM(CASE WHEN A.TRX_TYPE = '2' THEN A.TRX_AMOUNT ELSE 0 END) REFUND_TOTAL_FEE,
+		SUM(ROUND(A.TRX_AMOUNT * B.BANK_RATE,0)) BANK_SERVICE_TOTAL_FEE
+		FROM PAY_BILL A LEFT JOIN TB_MERCHANT B ON A.MERCHANT_NO = B.BANK_MERCHANT_ID
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND A.BANK_TRX_DATE BETWEEN #{entity.timeScope[0]} AND #{entity.timeScope[1]}
+			</if>
+			<if test="entity.serviceType != null">
+				AND A.SCENE_TYPE = #{entity.serviceType}
+			</if>
+			<if test="entity.userMerchantParam != null">
+				AND
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open="( A.TRX_PLACE LIKE " close=")" separator=" OR ">
+							CONCAT(#{item},'%')
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						A.TRX_PLACE LIKE CONCAT(#{entity.userMerchantParam.searchIds[0]},'%')
+					</when>
+					<otherwise>
+						A.TRX_PLACE = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		GROUP BY A.BANK_TRX_DATE,A.SCENE_TYPE,A.MERCHANT_NO,A.TRX_PLACE,B.NAME
+		ORDER BY A.BANK_TRX_DATE,A.MERCHANT_NO,A.SCENE_TYPE
+	</select>
+
+	<select id="getSum" resultMap="BaseResultMap">
+		SELECT SUM(CASE WHEN A.TRX_TYPE = '1' THEN 1 ELSE 0 END) DEDUCTION_TOTAL_COUNT,SUM(CASE WHEN A.TRX_TYPE = '1' THEN REDUCE_AMT ELSE 0 END) DISCOUNT_TOTAL_FEE,
+		SUM(CASE WHEN A.TRX_TYPE = '1' THEN A.TRX_AMOUNT ELSE 0 END) DEDUCTION_TOTAL_FEE,SUM(CASE WHEN A.TRX_TYPE = '2' THEN 1 ELSE 0 END) REFUND_TOTAL_COUNT,
+		SUM(CASE WHEN A.TRX_TYPE = '2' THEN A.TRX_AMOUNT ELSE 0 END) REFUND_TOTAL_FEE,SUM(ROUND(A.TRX_AMOUNT * B.BANK_RATE,0)) BANK_SERVICE_TOTAL_FEE
+		FROM PAY_BILL A LEFT JOIN TB_MERCHANT B ON A.MERCHANT_NO = B.BANK_MERCHANT_ID
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND A.BANK_TRX_DATE BETWEEN #{entity.timeScope[0]} AND #{entity.timeScope[1]}
+			</if>
+			<if test="entity.serviceType != null">
+				AND A.SCENE_TYPE = #{entity.serviceType}
+			</if>
+			<if test="entity.userMerchantParam != null">
+				AND
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open="( A.TRX_PLACE LIKE " close=")" separator=" OR ">
+							CONCAT(#{item},'%')
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						A.TRX_PLACE LIKE CONCAT(#{entity.userMerchantParam.searchIds[0]},'%')
+					</when>
+					<otherwise>
+						A.TRX_PLACE = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+	</select>
+
+	<select id="findDetailPage" resultType="com.hgsoft.modules.settlement.entity.TbBankSettlementDetail">
+		SELECT TRX_TYPE EEXIT_TYPE,BANK_TRX_DATE BANK_TRANS_DATE,TRX_SERNO TRANSACTION_ID,BANK_TRX_SERNO DEDUCTION_ORDER_ID,SIGN_MEDIUM_ID VEHICLE_PLATE,
+		       TRX_PLACE SITE_ID,SCENE_TYPE SERVICE_TYPE,TRX_AMOUNT MERCHANT_REAL_FEE,REDUCE_AMT MERCHANT_DISCOUNT_FEE
+		FROM PAY_BILL
+		WHERE BANK_TRX_DATE = #{entity.bankTransDate} AND SCENE_TYPE = #{entity.serviceType} AND TRX_PLACE LIKE CONCAT(#{entity.merchantId},'%')
+		<if test="entity.transactionId != null and entity.transactionId != ''">
+			AND TRX_SERNO = #{entity.transactionId}
+		</if>
+		<if test="entity.deductionOrderId != null and entity.deductionOrderId != ''">
+			AND BANK_TRX_SERNO = #{entity.deductionOrderId}
+		</if>
+		<if test="entity.vehiclePlate != null and entity.vehiclePlate != ''">
+			AND SIGN_MEDIUM_ID = #{entity.vehiclePlate}
+		</if>
+		<if test="entity.eexitType != null and entity.eexitType != ''">
+			AND TRX_TYPE = #{entity.eexitType}
+		</if>
+	</select>
+
+	<select id="getDetailSum" resultType="com.hgsoft.modules.settlement.entity.TbBankSettlementDetail">
+		SELECT SUM(TRX_AMOUNT) MERCHANT_REAL_FEE,SUM(REDUCE_AMT) MERCHANT_DISCOUNT_FEE
+		FROM PAY_BILL
+		WHERE BANK_TRX_DATE = #{entity.bankTransDate} AND SCENE_TYPE = #{entity.serviceType} AND TRX_PLACE LIKE CONCAT(#{entity.merchantId},'%')
+		<if test="entity.transactionId != null and entity.transactionId != ''">
+			AND TRX_SERNO = #{entity.transactionId}
+		</if>
+		<if test="entity.deductionOrderId != null and entity.deductionOrderId != ''">
+			AND BANK_TRX_SERNO = #{entity.deductionOrderId}
+		</if>
+		<if test="entity.vehiclePlate != null and entity.vehiclePlate != ''">
+			AND SIGN_MEDIUM_ID = #{entity.vehiclePlate}
+		</if>
+		<if test="entity.eexitType != null and entity.eexitType != ''">
+			AND TRX_TYPE = #{entity.eexitType}
+		</if>
+	</select>
+
+	<select id="findDetailList" resultType="com.hgsoft.modules.settlement.entity.TbBankSettlementDetail">
+		SELECT TRX_TYPE EEXIT_TYPE,BANK_TRX_DATE BANK_TRANS_DATE,TRX_SERNO TRANSACTION_ID,BANK_TRX_SERNO DEDUCTION_ORDER_ID,SIGN_MEDIUM_ID VEHICLE_PLATE,
+		TRX_PLACE SITE_ID,SCENE_TYPE SERVICE_TYPE,TRX_AMOUNT MERCHANT_REAL_FEE,REDUCE_AMT MERCHANT_DISCOUNT_FEE
+		FROM PAY_BILL
+		WHERE BANK_TRX_DATE = #{entity.bankTransDate} AND SCENE_TYPE = #{entity.serviceType} AND TRX_PLACE LIKE CONCAT(#{entity.merchantId},'%')
+		<if test="entity.transactionId != null and entity.transactionId != ''">
+			AND TRX_SERNO = #{entity.transactionId}
+		</if>
+		<if test="entity.deductionOrderId != null and entity.deductionOrderId != ''">
+			AND BANK_TRX_SERNO = #{entity.deductionOrderId}
+		</if>
+		<if test="entity.vehiclePlate != null and entity.vehiclePlate != ''">
+			AND SIGN_MEDIUM_ID = #{entity.vehiclePlate}
+		</if>
+		<if test="entity.eexitType != null and entity.eexitType != ''">
+			AND TRX_TYPE = #{entity.eexitType}
+		</if>
+	</select>
+</mapper>

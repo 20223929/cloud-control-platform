@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.api.mapper.AlarmCountMapper">
+
+    <select id="findAlarmCount" resultType="com.hgsoft.modules.api.entity.AlarmCountVo">
+        select count(sys_id) count,alarm_level alarmLevel from tb_abnormal_alarm where deal_state=0 group by alarm_level
+    </select>
+
+    <select id="findVersion" resultType="com.hgsoft.modules.api.entity.AlarmCountVo">
+        select max(version) version from tb_blacklist_version where deal_state=1 and failure_state=0 and download_state=1 and black_type = #{blackType} and package_type=#{packageType}
+    </select>
+</mapper>

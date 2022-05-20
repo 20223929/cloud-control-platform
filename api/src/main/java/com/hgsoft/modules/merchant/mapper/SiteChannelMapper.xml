@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.merchant.mapper.SiteChannelMapper">
+
+    <resultMap type="com.hgsoft.modules.merchant.entity.SiteChannel" id="BaseResultMap" autoMapping="true">
+        <id column="sys_id" property="sysId" />
+        <result column="channel_id" property="channelId" />
+        <result column="mch_exp_site_id" property="mchExpSiteId" />
+        <result column="created_time" property="createdTime" />
+        <result column="created_by" property="createdBy" />
+        <result column="del_flag" property="delFlag" />
+        <result column="status" property="status" />
+        <result column="updated_by" property="updatedBy" />
+        <result column="updated_time" property="updatedTime" />
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO PLATFORM_SITE_CHANNEL
+        (
+        channel_id,
+        mch_exp_site_id,
+        created_time,
+        created_by,
+        del_flag,
+        status,
+        updated_by,
+        updated_time
+        )
+        VALUES
+        (
+        #{entity.channelId},
+        #{entity.mchExpSiteId},
+        #{entity.createdTime},
+        #{entity.createdBy},
+        #{entity.delFlag},
+        #{entity.status},
+        #{entity.updatedBy},
+        #{entity.updatedTime}
+        )
+    </insert>
+</mapper>

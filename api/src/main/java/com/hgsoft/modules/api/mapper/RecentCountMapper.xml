@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.api.mapper.RecentCountMapper">
+
+    <select id="findByTime" resultType="com.hgsoft.modules.api.entity.RecentCountVo">
+        select
+            month ,
+            sum(count) count,
+            sum(amount) amount
+        from (
+            select
+                date_format(trans_time, '%Y/%m') month,
+                count(sys_id) count ,
+                sum(merchant_pay_fee) amount
+            from tb_online_eexit
+            <where>
+                <if test="beginTime != null and endTime != null">
+                    AND trans_time between #{beginTime} and #{endTime}
+                </if>
+            </where>
+            group by date_format(trans_time, '%Y/%m')
+            union all
+            select
+                date_format(trans_time, '%Y/%m') month,
+                count(sys_id) count ,
+                sum(merchant_pay_fee) amount
+            from tb_etc_transaction_eexit
+            <where>
+                <if test="beginTime != null and endTime != null">
+                    AND trans_time between #{beginTime} and #{endTime}
+                </if>
+            </where>
+            group by date_format(trans_time, '%Y/%m')
+        ) a
+        group by month
+    </select>
+
+</mapper>

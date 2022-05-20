@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.merchant.mapper.ChannelMapper">
+
+    <resultMap type="com.hgsoft.modules.merchant.entity.Channel" id="BaseResultMap" autoMapping="true">
+        <id column="sys_id" property="sysId" />
+        <result column="channel_id" property="channelId" />
+        <result column="channel_name" property="channelName" />
+        <result column="created_time" property="createdTime" />
+        <result column="created_by" property="createdBy" />
+        <result column="del_flag" property="delFlag" />
+        <result column="status" property="status" />
+    </resultMap>
+
+    <insert id="insert">
+        INSERT INTO PLATFORM_CHANNEL
+        (
+        channel_id,
+        channel_name,
+        created_time,
+        created_by,
+        del_flag,
+        status
+        )
+        VALUES
+        (
+        #{entity.channelId},
+        #{entity.channelName},
+        #{entity.createdTime},
+        #{entity.createdBy},
+        #{entity.delFlag},
+        #{entity.status}
+        )
+    </insert>
+</mapper>

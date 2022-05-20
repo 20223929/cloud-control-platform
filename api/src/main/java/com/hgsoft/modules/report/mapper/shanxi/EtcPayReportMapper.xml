@@ -1,0 +1,106 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.report.mapper.shanxi.EtcPayReportMapper">
+    <resultMap id="BaseResultMap" type="com.hgsoft.modules.report.entity.shanxi.EtcPayReport">
+        <result column="MERCHANT_GROUP_ID" property="merchantGroupId"/>
+        <result column="MERCHANT_ID" property="merchantId"/>
+        <result column="SITE_ID" property="siteId"/>
+        <result column="TRADE_DAY" property="tradeDay"/>
+        <result column="TOTAL_COUNT" property="totalCount"/>
+        <result column="TOTAL_FEE" property="totalFee"/>
+        <result column="PAY_COUNT" property="payCount"/>
+        <result column="PAY_FEE" property="payFee"/>
+        <result column="UNPAY_COUNT" property="unpayCount"/>
+        <result column="UNPAY_FEE" property="unpayFee"/>
+    </resultMap>
+
+    <select id="findPage" resultMap="BaseResultMap">
+        SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}') TRADE_DAY,COUNT(0) TOTAL_COUNT,SUM(MERCHANT_REAL_FEE) TOTAL_FEE,
+               SUM(CASE WHEN CLEAR_RESULT IN (0,1) THEN 1 ELSE 0 END) PAY_COUNT,SUM(CASE WHEN CLEAR_RESULT IN (0,1) THEN MERCHANT_REAL_FEE ELSE 0 END) PAY_FEE,
+               SUM(CASE WHEN CLEAR_RESULT = 2 OR CLEAR_RESULT IS NULL THEN 1 ELSE 0 END) UNPAY_COUNT,SUM(CASE WHEN CLEAR_RESULT = 2 OR CLEAR_RESULT IS NULL THEN MERCHANT_REAL_FEE ELSE 0 END) UNPAY_FEE
+        FROM TB_ETC_TRANSACTION_EEXIT
+        <where>
+            <if test="entity.timeScope != null and entity.timeScope.length > 0">
+                AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+                STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="entity.userMerchantParam != null">
+                <choose>
+                    <when test="entity.userMerchantParam.nodeLevel == 1">
+                        AND MERCHANT_GROUP_ID IN
+                        <foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+                            #{item}
+                        </foreach>
+                    </when>
+                    <when test="entity.userMerchantParam.nodeLevel == 2">
+                        AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+                    </when>
+                    <otherwise>
+                        AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+        GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}')
+        ORDER BY TRANS_TIME desc,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID
+    </select>
+
+    <select id="findListByCondition" resultMap="BaseResultMap">
+        SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}') TRADE_DAY,COUNT(0) TOTAL_COUNT,SUM(MERCHANT_REAL_FEE) TOTAL_FEE,
+        SUM(CASE WHEN CLEAR_RESULT IN (0,1) THEN 1 ELSE 0 END) PAY_COUNT,SUM(CASE WHEN CLEAR_RESULT IN (0,1) THEN MERCHANT_REAL_FEE ELSE 0 END) PAY_FEE,
+        SUM(CASE WHEN CLEAR_RESULT = 2 OR CLEAR_RESULT IS NULL THEN 1 ELSE 0 END) UNPAY_COUNT,SUM(CASE WHEN CLEAR_RESULT = 2 OR CLEAR_RESULT IS NULL THEN MERCHANT_REAL_FEE ELSE 0 END) UNPAY_FEE
+        FROM TB_ETC_TRANSACTION_EEXIT
+        <where>
+            <if test="entity.timeScope != null and entity.timeScope.length > 0">
+                AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+                STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="entity.userMerchantParam != null">
+                <choose>
+                    <when test="entity.userMerchantParam.nodeLevel == 1">
+                        AND MERCHANT_GROUP_ID IN
+                        <foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+                            #{item}
+                        </foreach>
+                    </when>
+                    <when test="entity.userMerchantParam.nodeLevel == 2">
+                        AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+                    </when>
+                    <otherwise>
+                        AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+        GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}')
+        ORDER BY TRANS_TIME desc,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID
+    </select>
+
+    <select id="getSum" resultMap="BaseResultMap">
+        SELECT COUNT(0) TOTAL_COUNT,SUM(MERCHANT_REAL_FEE) TOTAL_FEE,SUM(CASE WHEN CLEAR_RESULT IN (0,1) THEN 1 ELSE 0 END) PAY_COUNT,SUM(CASE WHEN CLEAR_RESULT IN (0,1) THEN MERCHANT_REAL_FEE ELSE 0 END) PAY_FEE,
+               SUM(CASE WHEN CLEAR_RESULT = 2 OR CLEAR_RESULT IS NULL THEN 1 ELSE 0 END) UNPAY_COUNT,SUM(CASE WHEN CLEAR_RESULT = 2 OR CLEAR_RESULT IS NULL THEN MERCHANT_REAL_FEE ELSE 0 END) UNPAY_FEE
+        FROM TB_ETC_TRANSACTION_EEXIT
+        <where>
+            <if test="entity.timeScope != null and entity.timeScope.length > 0">
+                AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+                STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="entity.userMerchantParam != null">
+                <choose>
+                    <when test="entity.userMerchantParam.nodeLevel == 1">
+                        AND MERCHANT_GROUP_ID IN
+                        <foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+                            #{item}
+                        </foreach>
+                    </when>
+                    <when test="entity.userMerchantParam.nodeLevel == 2">
+                        AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+                    </when>
+                    <otherwise>
+                        AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+    </select>
+</mapper>

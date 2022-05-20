@@ -1,0 +1,146 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.merchant.mapper.SysUserMerchantMapper">
+
+	<resultMap type="com.hgsoft.modules.merchant.entity.SysUserMerchant" id="BaseResultMap" autoMapping="true">
+		<id column="id" property="id" />
+    	<result column="user_id" property="userId" />
+    	<result column="merchant_id" property="merchantId" />
+    	<result column="create_by" property="createBy.id" />
+    	<result column="create_date" property="createDate" />
+    	<result column="update_by" property="updateBy.id" />
+    	<result column="update_date" property="updateDate" />
+    	<result column="remarks" property="remarks" />
+    	<result column="del_flag" property="delFlag" />
+	</resultMap>
+
+	<sql id="sysUserMerchantColumns">
+		a.id AS "id",
+		a.user_id AS "userId",
+		a.merchant_id AS "merchantId",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks",
+		a.del_flag AS "delFlag"
+	</sql>
+
+	<sql id="sysUserMerchantJoins">
+	</sql>
+
+
+	<select id="getById" resultType="com.hgsoft.modules.merchant.entity.SysUserMerchant" >
+		SELECT
+			<include refid="sysUserMerchantColumns"/>
+		FROM sys_user_merchant a
+		<include refid="sysUserMerchantJoins"/>
+		WHERE a.id = #{id}
+	</select>
+
+
+	<select id="getByEntity" resultType="com.hgsoft.modules.merchant.entity.SysUserMerchant" >
+		SELECT
+			<include refid="sysUserMerchantColumns"/>
+		FROM sys_user_merchant a
+		<include refid="sysUserMerchantJoins"/>
+		WHERE a.id = #{id}
+	</select>
+
+	<select id="findPage" resultType="com.hgsoft.modules.merchant.entity.SysUserMerchant" >
+		SELECT
+			<include refid="sysUserMerchantColumns" />
+		FROM sys_user_merchant a
+		<include refid="sysUserMerchantJoins"/>
+		<where>
+			a.del_flag = #{entity.DEL_FLAG_NORMAL}
+			${entity.dataScope}
+		</where>
+	</select>
+
+	<select id="findList" resultType="com.hgsoft.modules.merchant.entity.SysUserMerchant" >
+		SELECT
+			<include refid="sysUserMerchantColumns"/>
+		FROM sys_user_merchant a
+		<include refid="sysUserMerchantJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			${dataScope}
+		</where>
+	</select>
+
+	<select id="findAllList" resultType="com.hgsoft.modules.merchant.entity.SysUserMerchant" >
+		SELECT
+			<include refid="sysUserMerchantColumns"/>
+		FROM sys_user_merchant a
+		<include refid="sysUserMerchantJoins"/>
+		<where>
+			a.del_flag = #{DEL_FLAG_NORMAL}
+			${dataScope}
+		</where>
+	</select>
+
+	<insert id="insertEntity">
+		INSERT INTO sys_user_merchant(
+			id,
+			user_id,
+			merchant_id,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks,
+			del_flag
+		) VALUES (
+            #{id},
+            #{userId},
+            #{merchantId},
+            #{createBy.id},
+            #{createDate},
+            #{updateBy.id},
+            #{updateDate},
+            #{remarks},
+            #{delFlag}
+		)
+	</insert>
+
+	<update id="updateEntity">
+		UPDATE sys_user_merchant
+		<trim prefix="set" suffixOverrides=",">
+                  id = #{id},
+                  user_id = #{userId},
+                  merchant_id = #{merchantId},
+                  create_by = #{createBy.id},
+                  create_date = #{createDate},
+                  update_by = #{updateBy.id},
+                  update_date = #{updateDate},
+                  remarks = #{remarks},
+                  del_flag = #{delFlag}
+        </trim>
+		WHERE a.id = {"#"}{id}
+	</update>
+
+
+	<delete id="removeById">
+		DELETE
+		FROM sys_user_merchant
+		WHERE a.id = {"#"}{id}
+	</delete>
+
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+		UPDATE sys_user_merchant SET
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+	
+    <select id="findMerchantByUser"
+            resultType="com.hgsoft.modules.merchant.entity.TbMerchant">
+        select a.* from Tb_Merchant a join sys_user_merchant b on a.id=b.merchant_id
+        <where>
+            b.user_id=#{userId}
+        </where>
+    </select>
+
+</mapper>

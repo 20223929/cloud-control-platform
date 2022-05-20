@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.monitor.mapper.TbAbnormalAlarmMapper">
+
+	<resultMap type="com.hgsoft.modules.monitor.entity.TbAbnormalAlarm" id="BaseResultMap" autoMapping="true">
+		<id column="sys_id" property="sysId" />
+    	<result column="alarm_type" property="alarmType" />
+    	<result column="alarm_time" property="alarmTime" />
+    	<result column="alarm_level" property="alarmLevel" />
+    	<result column="alarm_info" property="alarmInfo" />
+    	<result column="deal_state" property="dealState" />
+    	<result column="deal_time" property="dealTime" />
+    	<result column="deal_user_id" property="dealUserId" />
+    	<result column="create_time" property="createTime" />
+    	<result column="update_time" property="updateTime" />
+	</resultMap>
+
+	<sql id="tbAbnormalAlarmColumns">
+		a.sys_id AS "sysId",
+		a.alarm_type AS "alarmType",
+		a.alarm_time AS "alarmTime",
+		a.alarm_level AS "alarmLevel",
+		a.alarm_info AS "alarmInfo",
+		a.deal_state AS "dealState",
+		a.deal_time AS "dealTime",
+		a.deal_user_id AS "dealUserId",
+		a.create_time AS "createTime",
+		a.update_time AS "updateTime"
+	</sql>
+
+	<sql id="tbAbnormalAlarmJoins">
+	</sql>
+
+
+	<select id="getById" resultType="com.hgsoft.modules.monitor.entity.TbAbnormalAlarm" >
+		SELECT
+			<include refid="tbAbnormalAlarmColumns"/>
+		FROM tb_abnormal_alarm a
+		<include refid="tbAbnormalAlarmJoins"/>
+		WHERE a.sysId = #{sys_id}
+	</select>
+
+
+	<select id="getByEntity" resultType="com.hgsoft.modules.monitor.entity.TbAbnormalAlarm" >
+		SELECT
+			<include refid="tbAbnormalAlarmColumns"/>
+		FROM tb_abnormal_alarm a
+		<include refid="tbAbnormalAlarmJoins"/>
+		WHERE a.sysId = #{sys_id}
+	</select>
+
+	<select id="findPage" resultType="com.hgsoft.modules.monitor.entity.TbAbnormalAlarm" >
+		SELECT
+			<include refid="tbAbnormalAlarmColumns" />
+		FROM tb_abnormal_alarm a
+		<include refid="tbAbnormalAlarmJoins"/>
+		<where>
+			
+			${entity.dataScope}
+			<if test="entity.beginAlarmTime != null and entity.endAlarmTime != null ">
+			AND a.alarm_time BETWEEN #{entity.beginAlarmTime} AND #{entity.endAlarmTime}
+	        </if>
+			<if test="entity.alarmLevel != null">
+			AND a.alarm_level = #{entity.alarmLevel}
+	        </if>
+			<if test="entity.dealState != null">
+			AND a.deal_state = #{entity.dealState}
+	        </if>
+		</where>
+		order by a.alarm_time desc
+	</select>
+
+	<select id="findList" resultType="com.hgsoft.modules.monitor.entity.TbAbnormalAlarm" >
+		SELECT
+			<include refid="tbAbnormalAlarmColumns"/>
+		FROM tb_abnormal_alarm a
+		<include refid="tbAbnormalAlarmJoins"/>
+		<where>
+			
+			${dataScope}
+    			<if test="beginAlarmTime != null and endAlarmTime != null ">
+    			AND a.alarm_time BETWEEN #{beginAlarmTime} AND #{endAlarmTime}
+    	</if>
+    			<if test="alarmLevel != null">
+			    AND a.alarm_level = #{alarmLevel}
+    	</if>
+    			<if test="dealState != null">
+			    AND a.deal_state = #{dealState}
+    	</if>
+		</where>
+		order by a.alarm_time desc
+	</select>
+
+	<select id="findAllList" resultType="com.hgsoft.modules.monitor.entity.TbAbnormalAlarm" >
+		SELECT
+			<include refid="tbAbnormalAlarmColumns"/>
+		FROM tb_abnormal_alarm a
+		<include refid="tbAbnormalAlarmJoins"/>
+		<where>
+			
+			${dataScope}
+		</where>
+	</select>
+
+	<insert id="insertEntity">
+		INSERT INTO tb_abnormal_alarm(
+			sys_id,
+			alarm_type,
+			alarm_time,
+			alarm_level,
+			alarm_info,
+			deal_state,
+			deal_time,
+			deal_user_id,
+			create_time,
+			update_time
+		) VALUES (
+            #{sysId},
+            #{alarmType},
+            #{alarmTime},
+            #{alarmLevel},
+            #{alarmInfo},
+            #{dealState},
+            #{dealTime},
+            #{dealUserId},
+            #{createTime},
+            #{updateTime}
+		)
+	</insert>
+
+	<update id="updateEntity">
+		UPDATE tb_abnormal_alarm
+		<trim prefix="set" suffixOverrides=",">
+                  sys_id = #{sysId},
+                  alarm_type = #{alarmType},
+                  alarm_time = #{alarmTime},
+                  alarm_level = #{alarmLevel},
+                  alarm_info = #{alarmInfo},
+                  deal_state = #{dealState},
+                  deal_time = #{dealTime},
+                  deal_user_id = #{dealUserId},
+                  create_time = #{createTime},
+                  update_time = #{updateTime}
+        </trim>
+		WHERE a.sysId = #{sys_id}
+	</update>
+
+
+	<delete id="removeById">
+		DELETE
+		FROM tb_abnormal_alarm
+		WHERE a.sysId = #{sys_id}
+	</delete>
+
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+		UPDATE tb_abnormal_alarm SET
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE sysId = #{sys_id}
+	</update>
+
+
+</mapper>

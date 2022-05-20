@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.api.mapper.TodayRankMapper">
+
+    <select id="findByTime" resultType="com.hgsoft.modules.api.entity.TodayRankVo">
+        select * from (
+            select sum(fee) fee,site_id siteId,site.name name from (
+                select sum(merchant_pay_fee) fee,site_id from tb_online_eexit
+                where service_type=#{serviceType} and trans_time between #{beginTime} and #{endTime}
+                group by site_id
+                union all
+                select sum(merchant_pay_fee) fee,site_id  from tb_etc_transaction_eexit
+                where service_type=#{serviceType} and trans_time between #{beginTime} and #{endTime}
+                group by site_id
+            ) a left join tb_site site on a.site_id=site.platform_site_id
+            group by site_id order by fee desc
+        )b limit 5
+    </select>
+
+</mapper>

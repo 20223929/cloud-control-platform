@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.merchant.mapper.MerchantCertMapper">
+
+    <resultMap type="com.hgsoft.modules.merchant.entity.MerchantCert" id="BaseResultMap" autoMapping="true">
+        <id column="sys_id" jdbcType="DECIMAL" property="sysId"/>
+        <result column="mch_id" jdbcType="VARCHAR" property="mchId"/>
+        <result column="name" jdbcType="VARCHAR" property="name"/>
+        <result column="created_by" jdbcType="VARCHAR" property="createdBy"/>
+        <result column="created_time" jdbcType="DATE" property="createdTime"/>
+        <result column="public_key" jdbcType="VARCHAR" property="publicKey"/>
+        <result column="private_key" jdbcType="VARCHAR" property="privateKey"/>
+        <result column="del_flag" jdbcType="INTEGER" property="delFlag"/>
+        <result column="description" jdbcType="VARCHAR" property="description"/>
+        <result column="start_time" jdbcType="DATE" property="startTime"/>
+        <result column="end_time" jdbcType="DATE" property="endTime"/>
+        <result column="serial_no" jdbcType="VARCHAR" property="serialNo"/>
+        <result column="updated_by" jdbcType="VARCHAR" property="updatedBy"/>
+        <result column="updated_time" jdbcType="DATE" property="updatedTime"/>
+    </resultMap>
+
+	<select id="selectByMchId" resultMap="BaseResultMap">
+		SELECT * FROM platform_merchant_cert WHERE MCH_ID = #{mchId}
+	</select>
+
+    <insert id="insert">
+		INSERT INTO platform_merchant_cert
+		(
+		created_time,
+		del_flag,
+		updated_by,
+		updated_time,
+		description,
+		end_time,
+		mch_id,
+		name,
+		private_key,
+		public_key,
+		serial_no,
+		start_time,
+		created_by
+		)
+		VALUES
+		(
+		#{entity.createdTime},
+		#{entity.delFlag},
+		#{entity.updatedBy},
+		#{entity.updatedTime},
+		#{entity.description},
+		#{entity.endTime},
+		#{entity.mchId},
+		#{entity.name},
+		#{entity.privateKey},
+		#{entity.publicKey},
+		#{entity.serialNo},
+		#{entity.startTime},
+		#{entity.createdBy}
+		)
+	</insert>
+
+    <update id="updateMerchantCert">
+		UPDATE PLATFORM_MERCHANT_CERT SET
+			updated_by = #{entity.updatedBy},
+			updated_time = #{entity.updatedTime},
+			description = #{entity.description},
+			end_time = #{entity.endTime},
+			name = #{entity.name},
+			private_key = #{entity.privateKey},
+			public_key = #{entity.publicKey},
+			serial_no = #{entity.serialNo},
+			start_time = #{entity.startTime}
+		WHERE MCH_ID = #{entity.mchId}
+	</update>
+
+
+	<delete id="deleteByMchId">
+		DELETE FROM PLATFORM_MERCHANT_CERT WHERE MCH_ID = #{mchId}
+	</delete>
+
+</mapper>

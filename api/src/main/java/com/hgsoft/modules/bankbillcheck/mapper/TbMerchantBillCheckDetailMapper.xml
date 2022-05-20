@@ -1,0 +1,163 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.bankbillcheck.mapper.TbMerchantBillCheckDetailMapper">
+
+    <sql id="searchBase">
+        SELECT
+            transaction_id,
+            merchant_group_id,
+            merchant_id,
+            site_id,
+            equipment_id,
+            amount,
+            disc_amount,
+            paid_amount,
+            trans_time,
+            trans_type,
+            trans_model,
+            remark,
+            create_time
+        FROM tb_merchant_bill_check_detail
+        <where>
+            <if test="entity.transDate !=null and entity.transDate != '' ">
+                AND (trans_time &gt;= STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d') and trans_time &lt; date_add(STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d'),interval 1 day))
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND site_id = #{entity.siteId}
+            </if>
+            <if test="entity.transactionId != null and entity.transactionId != ''">
+                AND transaction_id = #{entity.transactionId}
+            </if>
+            <if test="entity.transModel != null">
+                AND trans_model = #{entity.transModel}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="searchOffLine">
+        select
+        base.transaction_id as transactionId,
+        base.merchant_group_id as merchantGroupId,
+        base.merchant_id as merchantId,
+        base.site_id as siteId,
+        base.equipment_id as equipmentId,
+        base.amount as amount,
+        base.disc_amount as discAmount,
+        base.paid_amount as paidAmount,
+        base.trans_time as transTime,
+        base.trans_type as transType,
+        base.trans_model as transModel,
+        base.remark as remark,
+        base.create_time as createTime,
+        o.vehicle_plate as plateNum,
+        o.vehicle_color as plateColor,
+        o.etc_card_id as etcCardId,
+        null as bankDeductionOrderId,
+        o.ex_time as exTime,
+        o.en_time as enTime
+        from (<include refid="searchBase"/>) as base
+        inner join tb_etc_transaction_eexit o on
+        base.transaction_id = o.transaction_id
+        <where>
+            <if test="entity.etcCardId != null and entity.etcCardId != ''">
+                AND o.etc_card_id = #{entity.etcCardId}
+            </if>
+            <if test="entity.plateNum != null and entity.plateNum != ''">
+                AND o.vehicle_plate = #{entity.plateNum}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="searchOnline">
+        select
+        base.transaction_id as transactionId,
+        base.merchant_group_id as merchantGroupId,
+        base.merchant_id as merchantId,
+        base.site_id as siteId,
+        base.equipment_id as equipmentId,
+        base.amount as amount,
+        base.disc_amount as discAmount,
+        base.paid_amount as paidAmount,
+        base.trans_time as transTime,
+        base.trans_type as transType,
+        base.trans_model as transModel,
+        base.remark as remark,
+        base.create_time as createTime,
+        o.vehicle_plate as plateNum,
+        o.vehicle_color as plateColor,
+        null as etcCardId,
+        o.bank_deduction_order_id as bankDeductionOrderId,
+        o.ex_time as exTime,
+        o.en_time as enTime
+        from (<include refid="searchBase"/>) as base
+        inner join tb_online_eexit o on
+        base.transaction_id = o.transaction_id
+        <where>
+            <if test="entity.plateNum != null and entity.plateNum != ''">
+                AND o.vehicle_plate = #{entity.plateNum}
+            </if>
+        </where>
+    </sql>
+
+    <sql id="searchRefund">
+        select
+        base.transaction_id as transactionId,
+        base.merchant_group_id as merchantGroupId,
+        base.merchant_id as merchantId,
+        base.site_id as siteId,
+        base.equipment_id as equipmentId,
+        base.amount as amount,
+        base.disc_amount as discAmount,
+        base.paid_amount as paidAmount,
+        base.trans_time as transTime,
+        base.trans_type as transType,
+        base.trans_model as transModel,
+        base.remark as remark,
+        base.create_time as createTime,
+        o.vehicle_plate as plateNum,
+        o.vehicle_color as plateColor,
+        null as etcCardId,
+        o.bank_deduction_order_id as bankDeductionOrderId,
+        o.ex_time as exTime,
+        o.en_time as enTime
+        from (<include refid="searchBase"/>) as base
+        inner join tb_online_refund_eexit o on
+        base.transaction_id = o.refund_trans_id
+        <where>
+            <if test="entity.plateNum != null and entity.plateNum != ''">
+                AND o.vehicle_plate = #{entity.plateNum}
+            </if>
+        </where>
+    </sql>
+
+    <select id="findSearchDataPage"
+            resultType="com.hgsoft.modules.bankbillcheck.entity.TbMerchantBillCheckDetail">
+
+        select d.* from (
+                       select * from
+        (<include refid="searchOffLine"/>) a
+            union all  select * from
+        (<include refid="searchOnline"/>) b
+            union all select * from
+        (<include refid="searchRefund"/>) c) d
+
+    </select>
+    <select id="findSearchDataAll"
+            resultType="com.hgsoft.modules.bankbillcheck.entity.TbMerchantBillCheckDetail">
+
+        select d.* from (
+        select * from
+        (<include refid="searchOffLine"/>) a
+        union all  select * from
+        (<include refid="searchOnline"/>) b
+        union all select * from
+        (<include refid="searchRefund"/>) c) d
+
+    </select>
+</mapper>

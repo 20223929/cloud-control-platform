@@ -1,0 +1,291 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.bankbillcheck.mapper.TbCenterBillCheckDetailMapper">
+
+    <resultMap type="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheckDetail" id="BaseResultMap"
+               autoMapping="true">
+        <id column="trans_date" property="transDate"/>
+        <id column="merchant_group_id" property="merchantGroupId"/>
+        <id column="merchant_id" property="merchantId"/>
+        <id column="site_id" property="siteId"/>
+        <id column="equipment_id" property="equipmentId"/>
+        <result column="confirm_total_count" property="confirmTotalCount"/>
+        <result column="confirm_total_amount" property="confirmTotalAmount"/>
+		<result column="real_total_count" property="realTotalCount"/>
+		<result column="real_total_amount" property="realTotalAmount"/>
+    </resultMap>
+
+    <sql id="tbCenterBillCheckDetailColumns">
+        a.trans_date AS "transDate",
+		a.merchant_group_id AS "merchantGroupId",
+		a.merchant_id AS "merchantId",
+		a.site_id AS "siteId",
+		a.equipment_id AS "equipmentId",
+		a.confirm_total_count AS "confirmTotalCount",
+		a.confirm_total_amount AS "confirmTotalAmount",
+		a.real_total_count AS "realTotalCount",
+		a.real_total_amount AS "realTotalAmount"
+    </sql>
+
+    <sql id="tbCenterBillCheckDetailJoins">
+    </sql>
+
+
+    <select id="getById" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheckDetail">
+        SELECT
+        <include refid="tbCenterBillCheckDetailColumns"/>
+        FROM tb_center_bill_check_detail a
+        <include refid="tbCenterBillCheckDetailJoins"/>
+        WHERE a.transDate = #{trans_date} and a.merchantGroupId = #{merchant_group_id} and a.merchantId = #{merchant_id}
+        and a.siteId = #{site_id} and a.equipmentId = #{equipment_id}
+    </select>
+
+
+    <select id="getByEntity" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheckDetail">
+        SELECT
+        <include refid="tbCenterBillCheckDetailColumns"/>
+        FROM tb_center_bill_check_detail a
+        <include refid="tbCenterBillCheckDetailJoins"/>
+        WHERE a.transDate = #{trans_date} and a.merchantGroupId = #{merchant_group_id} and a.merchantId = #{merchant_id}
+        and a.siteId = #{site_id} and a.equipmentId = #{equipment_id}
+    </select>
+
+    <select id="findPage" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheckDetail">
+        SELECT
+        <include refid="tbCenterBillCheckDetailColumns"/>
+        FROM (
+        select
+        c.real_total_count as real_total_count,
+        c.real_total_amount as real_total_amount,
+        c.trans_date as trans_date,
+        c.merchant_group_id as merchant_group_id,
+        c.merchant_id as merchant_id,
+        c.site_id as site_id,
+        c.equipment_id as equipment_id,
+        d.confirm_total_count as confirm_total_count,
+        d.confirm_total_amount as confirm_total_amount
+        from
+        (
+        SELECT
+        COUNT(1) AS real_total_count,
+        SUM(merchant_real_fee) real_total_amount,
+        DATE_FORMAT(trans_time, '%Y-%m-%d') AS trans_date,
+        merchant_group_id,
+        merchant_id,
+        site_id,
+        equipment_id
+        FROM
+        tb_etc_transaction_eexit
+        <where>
+            ${entity.dataScope}
+            <if test="entity.equipmentId != null and entity.equipmentId != ''">
+                AND equipment_id = #{entity.equipmentId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND site_id = #{entity.siteId}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.transDate != null and entity.transDate!=''">
+                AND (trans_time &gt;= STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d') and trans_time &lt;
+                STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d')+1)
+            </if>
+        </where>
+        GROUP BY merchant_group_id , merchant_id , site_id , equipment_id
+        ) c left join tb_center_bill_check_detail d
+        on c.merchant_group_id = d.merchant_group_id
+        and c.merchant_id = d.merchant_id
+        and c.site_id = d.site_id
+        and c.equipment_id = d.equipment_id
+        and c.trans_date = d.trans_date
+        ) a
+        <include refid="tbCenterBillCheckDetailJoins"/>
+        <where>
+            ${entity.dataScope}
+            <if test="entity.equipmentId != null and entity.equipmentId != ''">
+                AND a.equipment_id = #{entity.equipmentId}
+            </if>
+        </where>
+    </select>
+
+    <select id="findList" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheckDetail">
+        SELECT
+        <include refid="tbCenterBillCheckDetailColumns"/>
+        FROM (
+		select
+        c.real_total_count as real_total_count,
+        c.real_total_amount as real_total_amount,
+        c.trans_date as trans_date,
+        c.merchant_group_id as merchant_group_id,
+        c.merchant_id as merchant_id,
+        c.site_id as site_id,
+        c.equipment_id as equipment_id,
+        d.confirm_total_count as confirm_total_count,
+        d.confirm_total_amount as confirm_total_amount
+		from
+		(
+		SELECT
+		COUNT(1) AS real_total_count,
+		SUM(merchant_real_fee) real_total_amount,
+		DATE_FORMAT(trans_time, '%Y-%m-%d') AS trans_date,
+		merchant_group_id,
+		merchant_id,
+		site_id,
+		equipment_id
+		FROM
+		tb_etc_transaction_eexit
+		<where>
+			${entity.dataScope}
+			<if test="equipmentId != null and equipmentId != ''">
+				AND equipment_id = #{equipmentId}
+			</if>
+			<if test="siteId != null and siteId != ''">
+				AND site_id = #{siteId}
+			</if>
+			<if test="merchantId != null and merchantId != ''">
+				AND merchant_id = #{merchantId}
+			</if>
+			<if test="merchantGroupId != null and merchantGroupId != ''">
+				AND merchant_group_id = #{merchantGroupId}
+			</if>
+            <if test="transDate != null and transDate!=''">
+                AND (trans_time &gt;= STR_TO_DATE(#{transDate}, '%Y-%m-%d') and trans_time &lt;
+                STR_TO_DATE(#{transDate}, '%Y-%m-%d')+1)
+            </if>
+		</where>
+		GROUP BY merchant_group_id , merchant_id , site_id , equipment_id
+		) c left join tb_center_bill_check_detail d
+            on c.merchant_group_id = d.merchant_group_id
+            and c.merchant_id = d.merchant_id
+            and c.site_id = d.site_id
+            and c.equipment_id = d.equipment_id
+            and c.trans_date = d.trans_date
+		) a
+        <include refid="tbCenterBillCheckDetailJoins"/>
+        <where>
+            ${dataScope}
+            <if test="equipmentId != null and equipmentId != ''">
+                AND a.equipment_id = #{equipmentId}
+            </if>
+        </where>
+    </select>
+
+    <select id="findAllList" resultType="com.hgsoft.modules.bankbillcheck.entity.TbCenterBillCheckDetail">
+        SELECT
+        <include refid="tbCenterBillCheckDetailColumns"/>
+        FROM (
+		select
+		c.real_total_count,
+		c.real_total_amount,
+		c.trans_date,
+		c.merchant_group_id,
+		c.merchant_id,
+		c.site_id,
+		c.equipment_id,
+		d.confirm_total_count,
+		d.confirm_total_amount
+		from
+		(
+		SELECT
+		COUNT(1) AS real_total_count,
+		SUM(merchant_real_fee) real_total_amount,
+		DATE_FORMAT(trans_time, '%Y-%m-%d') AS trans_date,
+		merchant_group_id,
+		merchant_id,
+		site_id,
+		equipment_id
+		FROM
+		tb_etc_transaction_eexit
+		<where>
+			${entity.dataScope}
+			<if test="equipmentId != null and equipmentId != ''">
+				AND equipment_id = #{entity.equipmentId}
+			</if>
+			<if test="site_id != null and site_id != ''">
+				AND site_id = #{entity.site_id}
+			</if>
+			<if test="merchant_id != null and merchant_id != ''">
+				AND merchant_id = #{merchant_id}
+			</if>
+			<if test="merchant_group_id != null and merchant_group_id != ''">
+				AND merchant_group_id = #{merchant_group_id}
+			</if>
+            <if test="transDate != null and transDate!=''">
+                AND (trans_time &gt;= STR_TO_DATE(#{transDate}, '%Y-%m-%d') and trans_time &lt;
+                STR_TO_DATE(#{transDate}, '%Y-%m-%d')+1)
+            </if>
+		</where>
+		GROUP BY merchant_group_id , merchant_id , site_id , equipment_id
+		) c left join tb_center_bill_check_detail d
+        on c.merchant_group_id = d.merchant_group_id
+        and c.merchant_id = d.merchant_id
+        and c.site_id = d.site_id
+        and c.equipment_id = d.equipment_id
+        and c.trans_date = d.trans_date
+		) a
+        <include refid="tbCenterBillCheckDetailJoins"/>
+        <where>
+            ${dataScope}
+        </where>
+    </select>
+
+    <insert id="insertEntity">
+        INSERT INTO tb_center_bill_check_detail(trans_date,
+                                                merchant_group_id,
+                                                merchant_id,
+                                                site_id,
+                                                equipment_id,
+                                                confirm_total_count,
+                                                confirm_total_amount)
+        VALUES (#{transDate},
+                #{merchantGroupId},
+                #{merchantId},
+                #{siteId},
+                #{equipmentId},
+                #{confirmTotalCount},
+                #{confirmTotalAmount})
+    </insert>
+
+    <update id="updateEntity">
+        UPDATE tb_center_bill_check_detail
+        <trim prefix="set" suffixOverrides=",">
+            trans_date = #{transDate},
+            merchant_group_id = #{merchantGroupId},
+            merchant_id = #{merchantId},
+            site_id = #{siteId},
+            equipment_id = #{equipmentId},
+            confirm_total_count = #{confirmTotalCount},
+            confirm_total_amount = #{confirmTotalAmount}
+        </trim>
+        WHERE a.transDate = {"#"}{trans_date} and a.merchantGroupId = {"#"}{merchant_group_id} and a.merchantId =
+        {"#"}{merchant_id} and a.siteId = {"#"}{site_id} and a.equipmentId = {"#"}{equipment_id}
+    </update>
+
+
+    <delete id="removeById">
+        DELETE
+        FROM tb_center_bill_check_detail
+        WHERE a.transDate = {"#"}{trans_date}
+          and a.merchantGroupId = {"#"}{merchant_group_id}
+          and a.merchantId = {"#"}{merchant_id}
+          and a.siteId = {"#"}{site_id}
+          and a.equipmentId = {"#"}{equipment_id}
+    </delete>
+
+    <!--逻辑删除-->
+    <update id="deleteByLogic">
+        UPDATE tb_center_bill_check_detail
+        SET del_flag = #{DEL_FLAG_DELETE}
+        WHERE transDate = #{trans_date}
+          and merchantGroupId = #{merchant_group_id}
+          and merchantId = #{merchant_id}
+          and siteId = #{site_id}
+          and equipmentId = #{equipment_id}
+    </update>
+
+
+</mapper>

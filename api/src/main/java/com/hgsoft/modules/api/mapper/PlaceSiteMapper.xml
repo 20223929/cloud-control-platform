@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.api.mapper.PlaceSiteMapper">
+
+    <select id="findByServiceType" resultType="com.hgsoft.modules.api.entity.PlaceSiteVo">
+        select serviceType,
+               name,
+               lng,
+               lat
+        from (
+            select substr(platform_site_id, 6, 1) serviceType,
+                   name,
+                   lng,
+                   lat
+            from tb_site
+        ) a
+        <where>
+            <if test="serviceType != null and serviceType != 0">
+                AND serviceType = #{serviceType}
+            </if>
+        </where>
+    </select>
+
+</mapper>

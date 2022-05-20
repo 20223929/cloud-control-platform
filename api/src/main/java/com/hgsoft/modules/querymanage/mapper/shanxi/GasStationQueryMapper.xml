@@ -1,0 +1,178 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.querymanage.mapper.shanxi.GasStationQueryMapper">
+
+    <resultMap type="com.hgsoft.modules.querymanage.entity.shanxi.GasStationQuery" id="BaseResultMap"
+               autoMapping="true">
+        <result column="vehicle_plate" property="vehicleNumber"/>
+        <result column="vehicle_color" property="vehicleColor"/>
+        <result column="etc_card_id" property="etcCardId"/>
+        <result column="sign_bank" property="signBank"/>
+        <result column="transaction_id" property="transactionId"/>
+        <result column="sign_medium_type" property="signMediumType"/>
+        <result column="merchant_group_id" property="merchantGroupId"/>
+        <result column="merchant_id" property="merchantId"/>
+        <result column="site_id" property="siteId"/>
+        <result column="detail" javaType="com.hgsoft.modules.querymanage.entity.shanxi.GasStationDetailInfo"
+                property="detailInfo" typeHandler="com.hgsoft.modules.querymanage.typeHandler.JsonTypeHandler"/>
+        <result column="merchant_real_fee" property="tradeFee"/>
+        <result column="trade_time" property="tradeTime"/>
+        <result column="status" property="status"/>
+        <result column="merchant_pay_fee" property="payFee"/>
+        <result column="merchant_discount_fee" property="discountFee"/>
+        <result column="bank_deduction_order_id" property="bankDeductionOrderId"/>
+        <result column="deduction_order_id" property="deductionOrderId"/>
+        <result column="vehicle_type" property="vehicleType"/>
+        <result column="equipment_id" property="equipmentId"/>
+        <result column="model_type" property="modelType"/>
+    </resultMap>
+
+    <sql id="innerCondition">
+        <if test="entity.timeScope != null and entity.timeScope.length > 0">
+            AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+            STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+        </if>
+        <if test="entity.userMerchantParam != null">
+            <choose>
+                <when test="entity.userMerchantParam.nodeLevel == 1">
+                    AND MERCHANT_GROUP_ID IN
+                    <foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")"
+                             separator=",">
+                        #{item}
+                    </foreach>
+                </when>
+                <when test="entity.userMerchantParam.nodeLevel == 2">
+                    AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+                </when>
+                <otherwise>
+                    AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+                </otherwise>
+            </choose>
+        </if>
+        <if test="entity.vehicleNumber != null and entity.vehicleNumber != ''">
+            AND VEHICLE_PLATE = #{entity.vehicleNumber}
+        </if>
+        <if test="entity.transactionId != null and entity.transactionId != ''">
+            AND TRANSACTION_ID = #{entity.transactionId}
+        </if>
+        <if test="entity.etcCardId != null and entity.etcCardId != ''">
+            AND ETC_CARD_ID = #{entity.etcCardId}
+        </if>
+    </sql>
+
+    <sql id="queryData">
+        <if test="entity.modelType != null">
+            select A.* from (
+            <choose>
+                <when test="entity.modelType == 1">
+                    SELECT 1
+                    MODEL_TYPE,VEHICLE_PLATE,VEHICLE_COLOR,ETC_CARD_ID,TRANSACTION_ID,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,EQUIPMENT_ID,DETAIL,MERCHANT_REAL_FEE,DATE_FORMAT(TRANS_TIME,'%Y-%m-%d
+                    %H:%i:%s') TRADE_TIME,7 STATUS
+                    FROM TB_ONLINE_EEXIT
+                    WHERE SERVICE_TYPE = 3 AND DEDUCTION_STATE = 1
+                    <include refid="innerCondition"/>
+                </when>
+                <otherwise>
+                    SELECT VEHICLE_PLATE,VEHICLE_COLOR,ETC_CARD_ID,TRANSACTION_ID,2
+                    MODEL_TYPE,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,EQUIPMENT_ID,DETAIL,MERCHANT_REAL_FEE,DATE_FORMAT(TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADE_TIME,
+                    CASE WHEN SEND_CLEAR_FLAG = 0 THEN 1 WHEN SEND_CLEAR_FLAG = 1 AND CLEAR_CHECK_RESULT = 1 AND
+                    CLEAR_RESULT IS NULL THEN 2 WHEN CLEAR_CHECK_RESULT = 2 THEN 3
+                    WHEN CLEAR_RESULT IN (0,1) AND SETTLEMENT_CONFIRM_STATE = 1 THEN 4 WHEN SETTLEMENT_CONFIRM_STATE = 2
+                    THEN 5 ELSE NULL END STATUS
+                    FROM TB_ETC_TRANSACTION_EEXIT
+                    WHERE SERVICE_TYPE = 3
+                    <include refid="innerCondition"/>
+
+                    UNION ALL
+
+                    SELECT VEHICLE_PLATE,VEHICLE_COLOR,ETC_CARD_ID,TRANSACTION_ID,2
+                    MODEL_TYPE,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,EQUIPMENT_ID,DETAIL,MERCHANT_REAL_FEE,DATE_FORMAT(TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADE_TIME,6 STATUS
+                    FROM TB_ETC_PLATFORM_ERROR_EEXIT
+                    WHERE SERVICE_TYPE = 3
+                    <include refid="innerCondition"/>
+                </otherwise>
+            </choose>
+            ) A
+            <where>
+                <if test="entity.status != null">
+                    AND A.STATUS = #{entity.status}
+                </if>
+            </where>
+            ORDER BY A.TRADE_TIME DESC
+        </if>
+        <if test="entity.modelType == null">
+            select A.* from (
+            SELECT VEHICLE_PLATE,VEHICLE_COLOR,ETC_CARD_ID,TRANSACTION_ID,1
+            MODEL_TYPE,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,EQUIPMENT_ID,DETAIL,MERCHANT_REAL_FEE,DATE_FORMAT(TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADE_TIME,7 STATUS
+            FROM TB_ONLINE_EEXIT
+            WHERE SERVICE_TYPE = 3 AND DEDUCTION_STATE = 1
+            <include refid="innerCondition"/>
+
+            union all
+
+            SELECT VEHICLE_PLATE,VEHICLE_COLOR,ETC_CARD_ID,TRANSACTION_ID,2
+            MODEL_TYPE,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,EQUIPMENT_ID,DETAIL,MERCHANT_REAL_FEE,DATE_FORMAT(TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADE_TIME,
+            CASE WHEN SEND_CLEAR_FLAG = 0 THEN 1 WHEN SEND_CLEAR_FLAG = 1 AND CLEAR_CHECK_RESULT = 1 AND CLEAR_RESULT IS
+            NULL THEN 2 WHEN CLEAR_CHECK_RESULT = 2 THEN 3
+            WHEN CLEAR_RESULT IN (0,1) AND SETTLEMENT_CONFIRM_STATE = 1 THEN 4 WHEN SETTLEMENT_CONFIRM_STATE = 2 THEN 5
+            ELSE NULL END STATUS
+            FROM TB_ETC_TRANSACTION_EEXIT
+            WHERE SERVICE_TYPE = 3
+            <include refid="innerCondition"/>
+
+            UNION ALL
+
+            SELECT VEHICLE_PLATE,VEHICLE_COLOR,ETC_CARD_ID,TRANSACTION_ID,2
+            MODEL_TYPE,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,EQUIPMENT_ID,DETAIL,MERCHANT_REAL_FEE,DATE_FORMAT(TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADE_TIME,6 STATUS
+            FROM TB_ETC_PLATFORM_ERROR_EEXIT
+            WHERE SERVICE_TYPE = 3
+            <include refid="innerCondition"/>
+            ) A
+            <where>
+                <if test="entity.status != null">
+                    AND A.STATUS = #{entity.status}
+                </if>
+            </where>
+            order by A.TRADE_TIME desc
+        </if>
+    </sql>
+
+    <select id="findPage" resultMap="BaseResultMap">
+        <include refid="queryData"/>
+    </select>
+
+    <select id="findListByConditions" resultMap="BaseResultMap">
+        <include refid="queryData"/>
+    </select>
+
+    <select id="findById" resultMap="BaseResultMap">
+        <choose>
+            <when test="entity.modelType == 1">
+                SELECT
+                VEHICLE_PLATE,VEHICLE_COLOR,ETC_CARD_ID,TRANSACTION_ID,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,EQUIPMENT_ID,DETAIL,MERCHANT_REAL_FEE,DATE_FORMAT(TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADE_TIME,7 status,
+                SIGN_BANK,MERCHANT_PAY_FEE,MERCHANT_DISCOUNT_FEE,BANK_DEDUCTION_ORDER_ID,DEDUCTION_ORDER_ID,VEHICLE_TYPE,1
+                MODEL_TYPE
+                FROM TB_ONLINE_EEXIT
+                WHERE TRANSACTION_ID = #{entity.transactionId}
+            </when>
+            <when test="entity.modelType == 2 and entity.status == 6">
+                select
+                vehicle_plate,vehicle_color,etc_card_id,transaction_id,merchant_group_id,merchant_id,site_id,equipment_id,DETAIL,MERCHANT_REAL_FEE,DATE_FORMAT(TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADE_TIME,6 status,
+                MERCHANT_PAY_FEE,MERCHANT_DISCOUNT_FEE,VEHICLE_TYPE,2 MODEL_TYPE,platform_check_msg msg
+                from tb_etc_platform_error_eexit
+                where TRANSACTION_ID = #{entity.transactionId}
+            </when>
+            <otherwise>
+                select
+                VEHICLE_PLATE,VEHICLE_COLOR,ETC_CARD_ID,TRANSACTION_ID,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,EQUIPMENT_ID,DETAIL,MERCHANT_REAL_FEE,DATE_FORMAT(TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADE_TIME,MERCHANT_PAY_FEE,MERCHANT_DISCOUNT_FEE,VEHICLE_TYPE,2
+                MODEL_TYPE,case when send_clear_flag = 0 then 1 when
+                send_clear_flag = 1 and clear_check_result = 1 and clear_result IS NULL then 2 when clear_check_result =
+                2 then 3 when clear_result IN (0,1) and settlement_confirm_state =
+                1 then 4 when settlement_confirm_state = 2 then 5 else null end status,case when clear_check_result = 2
+                then clear_check_result_msg else null end msg
+                from tb_etc_transaction_eexit
+                where TRANSACTION_ID = #{entity.transactionId}
+            </otherwise>
+        </choose>
+    </select>
+</mapper>

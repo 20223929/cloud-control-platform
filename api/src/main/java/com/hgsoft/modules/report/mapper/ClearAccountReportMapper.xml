@@ -1,0 +1,269 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.report.mapper.ClearAccountReportMapper">
+
+	<resultMap type="com.hgsoft.modules.report.entity.ClearAccountReport" id="BaseResultMap" autoMapping="true">
+		<result column="MERCHANT_GROUP_ID" property="merchantGroupId" />
+		<result column="MERCHANT_ID" property="merchantId" />
+		<result column="SITE_ID" property="siteId" />
+		<result column="TRADE_DAY" property="tradeDay" />
+		<result column="TOTAL_COUNT" property="totalCount" />
+		<result column="TOTAL_ACTUAL_FEE" property="totalActualFee" />
+		<result column="SETTLEMENT_COUNT" property="settlementCount" />
+		<result column="SETTLEMENT_MERCHANT_TOTAL_FEE" property="settlementMerchantTotalFee" />
+		<result column="DIFFER_COUNT" property="differCount" />
+		<result column="DIFFER_FEE" property="differFee" />
+		<result column="CLEAR_COUNT" property="clearCount" />
+		<result column="CLEAR_FEE" property="clearFee" />
+		<result column="UNCLEAR_COUNT" property="unclearCount" />
+		<result column="UNCLEAR_FEE" property="unclearFee" />
+		<result column="EXCEPTION_COUNT" property="exceptionCount" />
+		<result column="EXCEPTION_FEE" property="exceptionFee" />
+	</resultMap>
+
+	<select id="findPage" resultMap="BaseResultMap" >
+		select * from
+		(SELECT A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.TRADE_DAY,SUM(A.TOTAL_COUNT) TOTAL_COUNT,CONVERT(SUM(A.TOTAL_ACTUAL_FEE)/100,DECIMAL(64,2)) TOTAL_ACTUAL_FEE,
+		SUM(A.SETTLEMENT_COUNT) SETTLEMENT_COUNT,CONVERT (SUM(A.SETTLEMENT_MERCHANT_TOTAL_FEE)/100,DECIMAL(64,2)) SETTLEMENT_MERCHANT_TOTAL_FEE,
+		SUM(A.CLEAR_COUNT - A.SETTLEMENT_COUNT) DIFFER_COUNT,CONVERT(SUM(A.CLEAR_FEE - A.SETTLEMENT_MERCHANT_TOTAL_FEE)/100,DECIMAL(64,2)) DIFFER_FEE,
+		SUM(A.CLEAR_COUNT) CLEAR_COUNT,CONVERT(SUM(A.CLEAR_FEE)/100,DECIMAL(64,2)) CLEAR_FEE,SUM(A.UNCLEAR_COUNT) UNCLEAR_COUNT,CONVERT(SUM(A.UNCLEAR_FEE)/100,DECIMAL(64,2)) UNCLEAR_FEE,
+		SUM(A.EXCEPTION_COUNT) EXCEPTION_COUNT,CONVERT(SUM(A.EXCEPTION_FEE)/100,DECIMAL(64,2)) EXCEPTION_FEE
+		 FROM (
+			SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}') TRADE_DAY,COUNT(0) TOTAL_COUNT,
+			SUM(CASE WHEN MERCHANT_REAL_FEE IS NULL THEN 0 ELSE MERCHANT_REAL_FEE END) TOTAL_ACTUAL_FEE,SUM(CASE WHEN
+			SETTLEMENT_CONFIRM_STATE = 2 THEN 1 ELSE 0 END) SETTLEMENT_COUNT,
+			SUM(CASE WHEN SETTLEMENT_CONFIRM_STATE = 2 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+			SETTLEMENT_MERCHANT_TOTAL_FEE,SUM(CASE WHEN CLEAR_RESULT IN(0,1) THEN 1 ELSE 0 END) CLEAR_COUNT,
+			SUM(CASE WHEN CLEAR_RESULT IN(0,1) THEN MERCHANT_REAL_FEE ELSE 0 END) CLEAR_FEE,SUM(CASE WHEN REPAIR_STATE IN
+			(0,1) AND CLEAR_RESULT IS NULL THEN 1 ELSE 0 END) UNCLEAR_COUNT,
+			SUM(CASE WHEN REPAIR_STATE IN (0,1) AND CLEAR_RESULT IS NULL THEN MERCHANT_REAL_FEE ELSE 0 END)
+			UNCLEAR_FEE,SUM(CASE WHEN CLEAR_CHECK_RESULT = 2 THEN 1 ELSE 0 END) EXCEPTION_COUNT,
+			SUM(CASE WHEN CLEAR_CHECK_RESULT = 2 THEN MERCHANT_REAL_FEE ELSE 0 END) EXCEPTION_FEE
+			FROM TB_ETC_TRANSACTION_EEXIT
+			<where>
+				<if test="entity.timeScope != null and entity.timeScope.length > 0">
+					AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+					STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+				</if>
+				<if test="entity.userMerchantParam != null">
+					<choose>
+						<when test="entity.userMerchantParam.nodeLevel == 1">
+							AND MERCHANT_GROUP_ID IN
+							<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+								#{item}
+							</foreach>
+						</when>
+						<when test="entity.userMerchantParam.nodeLevel == 2">
+							AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+						</when>
+						<otherwise>
+							AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+			GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}')
+			UNION ALL
+			SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}') TRADE_DAY,SUM(CASE WHEN
+			REPAIR_STATE IN (0,2) THEN 1 ELSE 0 END) TOTAL_COUNT,
+			SUM(CASE WHEN REPAIR_STATE IN (0,2) THEN MERCHANT_REAL_FEE ELSE 0 END) TOTAL_ACTUAL_FEE,0 SETTLEMENT_COUNT,0
+			SETTLEMENT_MERCHANT_TOTAL_FEE,
+			0 CLEAR_COUNT,0 CLEAR_FEE,SUM(CASE WHEN REPAIR_STATE = 0 THEN 1 ELSE 0 END) UNCLEAR_COUNT,SUM(CASE WHEN
+			REPAIR_STATE = 0 THEN MERCHANT_REAL_FEE ELSE 0 END) UNCLEAR_FEE,
+			SUM(CASE WHEN REPAIR_STATE IN (0,2) THEN 1 ELSE 0 END) EXCEPTION_COUNT,SUM(CASE WHEN REPAIR_STATE IN (0,2) THEN
+			MERCHANT_REAL_FEE ELSE 0 END) EXCEPTION_FEE
+			FROM TB_ETC_PLATFORM_ERROR_EEXIT
+			<where>
+				<if test="entity.timeScope != null and entity.timeScope.length > 0">
+					AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+					STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+				</if>
+				<if test="entity.userMerchantParam != null">
+					<choose>
+						<when test="entity.userMerchantParam.nodeLevel == 1">
+							AND MERCHANT_GROUP_ID IN
+							<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+								#{item}
+							</foreach>
+						</when>
+						<when test="entity.userMerchantParam.nodeLevel == 2">
+							AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+						</when>
+						<otherwise>
+							AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+			GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}')
+		)A
+		GROUP BY A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.TRADE_DAY
+		ORDER BY A.TRADE_DAY,A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID
+		) b order by b.TRADE_DAY desc
+	</select>
+
+	<select id="findListByCondition" resultMap="BaseResultMap" >
+		select * from
+		(SELECT A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.TRADE_DAY,SUM(A.TOTAL_COUNT)
+		TOTAL_COUNT,CONVERT(SUM(A.TOTAL_ACTUAL_FEE)/100,DECIMAL(64,2)) TOTAL_ACTUAL_FEE,
+		SUM(A.SETTLEMENT_COUNT) SETTLEMENT_COUNT,CONVERT (SUM(A.SETTLEMENT_MERCHANT_TOTAL_FEE)/100,DECIMAL(64,2))
+		SETTLEMENT_MERCHANT_TOTAL_FEE,
+		SUM(A.CLEAR_COUNT - A.SETTLEMENT_COUNT) DIFFER_COUNT,CONVERT(SUM(A.CLEAR_FEE -
+		A.SETTLEMENT_MERCHANT_TOTAL_FEE)/100,DECIMAL(64,2)) DIFFER_FEE,
+		SUM(A.CLEAR_COUNT) CLEAR_COUNT,CONVERT(SUM(A.CLEAR_FEE)/100,DECIMAL(64,2)) CLEAR_FEE,SUM(A.UNCLEAR_COUNT)
+		UNCLEAR_COUNT,CONVERT(SUM(A.UNCLEAR_FEE)/100,DECIMAL(64,2)) UNCLEAR_FEE,
+		SUM(A.EXCEPTION_COUNT) EXCEPTION_COUNT,CONVERT(SUM(A.EXCEPTION_FEE)/100,DECIMAL(64,2)) EXCEPTION_FEE
+		FROM (
+		SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}') TRADE_DAY,COUNT(0)
+		TOTAL_COUNT,
+		SUM(CASE WHEN MERCHANT_REAL_FEE IS NULL THEN 0 ELSE MERCHANT_REAL_FEE END) TOTAL_ACTUAL_FEE,SUM(CASE WHEN
+		SETTLEMENT_CONFIRM_STATE = 2 THEN 1 ELSE 0 END) SETTLEMENT_COUNT,
+		SUM(CASE WHEN SETTLEMENT_CONFIRM_STATE = 2 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+		SETTLEMENT_MERCHANT_TOTAL_FEE,SUM(CASE WHEN CLEAR_RESULT IN(0,1) THEN 1 ELSE 0 END) CLEAR_COUNT,
+		SUM(CASE WHEN CLEAR_RESULT IN(0,1) THEN MERCHANT_REAL_FEE ELSE 0 END) CLEAR_FEE,SUM(CASE WHEN REPAIR_STATE IN
+		(0,1) AND CLEAR_RESULT IS NULL THEN 1 ELSE 0 END) UNCLEAR_COUNT,
+		SUM(CASE WHEN REPAIR_STATE IN (0,1) AND CLEAR_RESULT IS NULL THEN MERCHANT_REAL_FEE ELSE 0 END)
+		UNCLEAR_FEE,SUM(CASE WHEN CLEAR_CHECK_RESULT = 2 THEN 1 ELSE 0 END) EXCEPTION_COUNT,
+		SUM(CASE WHEN CLEAR_CHECK_RESULT = 2 THEN MERCHANT_REAL_FEE ELSE 0 END) EXCEPTION_FEE
+		FROM TB_ETC_TRANSACTION_EEXIT
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.userMerchantParam != null">
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						AND MERCHANT_GROUP_ID IN
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")"
+								 separator=",">
+							#{item}
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+					</when>
+					<otherwise>
+						AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}')
+		UNION ALL
+		SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}') TRADE_DAY,SUM(CASE WHEN
+		REPAIR_STATE IN (0,2) THEN 1 ELSE 0 END) TOTAL_COUNT,
+		SUM(CASE WHEN REPAIR_STATE IN (0,2) THEN MERCHANT_REAL_FEE ELSE 0 END) TOTAL_ACTUAL_FEE,0 SETTLEMENT_COUNT,0
+		SETTLEMENT_MERCHANT_TOTAL_FEE,
+		0 CLEAR_COUNT,0 CLEAR_FEE,SUM(CASE WHEN REPAIR_STATE = 0 THEN 1 ELSE 0 END) UNCLEAR_COUNT,SUM(CASE WHEN
+		REPAIR_STATE = 0 THEN MERCHANT_REAL_FEE ELSE 0 END) UNCLEAR_FEE,
+		SUM(CASE WHEN REPAIR_STATE IN (0,2) THEN 1 ELSE 0 END) EXCEPTION_COUNT,SUM(CASE WHEN REPAIR_STATE IN (0,2) THEN
+		MERCHANT_REAL_FEE ELSE 0 END) EXCEPTION_FEE
+		FROM TB_ETC_PLATFORM_ERROR_EEXIT
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.userMerchantParam != null">
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						AND MERCHANT_GROUP_ID IN
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")"
+								 separator=",">
+							#{item}
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+					</when>
+					<otherwise>
+						AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}')
+		)A
+		GROUP BY A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.TRADE_DAY
+		ORDER BY A.TRADE_DAY,A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID
+		) b order by b.TRADE_DAY desc
+	</select>
+
+	<select id="getSum" resultMap="BaseResultMap" >
+		SELECT SUM(A.TOTAL_COUNT) TOTAL_COUNT,CONVERT(SUM(A.TOTAL_ACTUAL_FEE)/100,DECIMAL(64,2)) TOTAL_ACTUAL_FEE,
+		SUM(A.SETTLEMENT_COUNT) SETTLEMENT_COUNT,CONVERT (SUM(A.SETTLEMENT_MERCHANT_TOTAL_FEE)/100,DECIMAL(64,2)) SETTLEMENT_MERCHANT_TOTAL_FEE,
+		SUM(A.CLEAR_COUNT - A.SETTLEMENT_COUNT) DIFFER_COUNT,CONVERT(SUM(A.CLEAR_FEE - A.SETTLEMENT_MERCHANT_TOTAL_FEE)/100,DECIMAL(64,2)) DIFFER_FEE,
+		SUM(A.CLEAR_COUNT) CLEAR_COUNT,CONVERT(SUM(A.CLEAR_FEE)/100,DECIMAL(64,2)) CLEAR_FEE,SUM(A.UNCLEAR_COUNT) UNCLEAR_COUNT,CONVERT(SUM(A.UNCLEAR_FEE)/100,DECIMAL(64,2)) UNCLEAR_FEE,
+		SUM(A.EXCEPTION_COUNT) EXCEPTION_COUNT,CONVERT(SUM(A.EXCEPTION_FEE)/100,DECIMAL(64,2)) EXCEPTION_FEE
+		FROM (
+			SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}') TRADE_DAY,COUNT(0) TOTAL_COUNT,
+			SUM(CASE WHEN MERCHANT_REAL_FEE IS NULL THEN 0 ELSE MERCHANT_REAL_FEE END) TOTAL_ACTUAL_FEE,SUM(CASE WHEN
+			SETTLEMENT_CONFIRM_STATE = 2 THEN 1 ELSE 0 END) SETTLEMENT_COUNT,
+			SUM(CASE WHEN SETTLEMENT_CONFIRM_STATE = 2 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+			SETTLEMENT_MERCHANT_TOTAL_FEE,SUM(CASE WHEN CLEAR_RESULT IN(0,1) THEN 1 ELSE 0 END) CLEAR_COUNT,
+			SUM(CASE WHEN CLEAR_RESULT IN(0,1) THEN MERCHANT_REAL_FEE ELSE 0 END) CLEAR_FEE,SUM(CASE WHEN REPAIR_STATE IN
+			(0,1) AND CLEAR_RESULT IS NULL THEN 1 ELSE 0 END) UNCLEAR_COUNT,
+			SUM(CASE WHEN REPAIR_STATE IN (0,1) AND CLEAR_RESULT IS NULL THEN MERCHANT_REAL_FEE ELSE 0 END)
+			UNCLEAR_FEE,SUM(CASE WHEN CLEAR_CHECK_RESULT = 2 THEN 1 ELSE 0 END) EXCEPTION_COUNT,
+			SUM(CASE WHEN CLEAR_CHECK_RESULT = 2 THEN MERCHANT_REAL_FEE ELSE 0 END) EXCEPTION_FEE
+			FROM TB_ETC_TRANSACTION_EEXIT
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.userMerchantParam != null">
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						AND MERCHANT_GROUP_ID IN
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+							#{item}
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+					</when>
+					<otherwise>
+						AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+			GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}')
+			UNION ALL
+			SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}') TRADE_DAY,SUM(CASE WHEN
+			REPAIR_STATE IN (0,2) THEN 1 ELSE 0 END) TOTAL_COUNT,
+			SUM(CASE WHEN REPAIR_STATE IN (0,2) THEN MERCHANT_REAL_FEE ELSE 0 END) TOTAL_ACTUAL_FEE,0 SETTLEMENT_COUNT,0
+			SETTLEMENT_MERCHANT_TOTAL_FEE,
+			0 CLEAR_COUNT,0 CLEAR_FEE,SUM(CASE WHEN REPAIR_STATE = 0 THEN 1 ELSE 0 END) UNCLEAR_COUNT,SUM(CASE WHEN
+			REPAIR_STATE = 0 THEN MERCHANT_REAL_FEE ELSE 0 END) UNCLEAR_FEE,
+			SUM(CASE WHEN REPAIR_STATE IN (0,2) THEN 1 ELSE 0 END) EXCEPTION_COUNT,SUM(CASE WHEN REPAIR_STATE IN (0,2) THEN
+			MERCHANT_REAL_FEE ELSE 0 END) EXCEPTION_FEE
+			FROM TB_ETC_PLATFORM_ERROR_EEXIT
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.userMerchantParam != null">
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						AND MERCHANT_GROUP_ID IN
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+							#{item}
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+					</when>
+					<otherwise>
+						AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+			GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${dimension}')
+		)A
+	</select>
+</mapper>

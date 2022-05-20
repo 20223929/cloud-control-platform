@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.querymanage.mapper.TbEtcVehicleEexitMapper">
+
+    <sql id="baseSelect">
+        SELECT
+        `merchant_group_id`,
+        `merchant_id`,
+        `site_id`,
+        `service_type`,
+        `vehicle_plate`,
+        `vehicle_color`,
+        `etc_card_id`,
+        `merchant_real_fee`,
+        `en_time`,
+        `ex_time`,
+        `update_time`
+        FROM
+        `tb_etc_vehicle_eexit`
+        <where>
+            <if test="entity.serviceType != null and entity.serviceType != ''">
+                AND service_type = #{entity.serviceType}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND site_id = #{entity.siteId}
+            </if>
+            <if test="entity.vehiclePlate != null and entity.vehiclePlate != ''">
+                AND vehicle_plate = #{entity.vehiclePlate}
+            </if>
+            <if test="entity.vehicleColor != null and entity.vehicleColor != ''">
+                AND vehicle_color = #{entity.vehicleColor}
+            </if>
+            <if test="entity.etcCardId != null and entity.etcCardId != ''">
+                AND etc_card_id = #{entity.etcCardId}
+            </if>
+            <if test="entity.etcCardId != null and entity.etcCardId != ''">
+                AND etc_card_id = #{entity.etcCardId}
+            </if>
+            <if test="entity.beginSearchDate != null and entity.endSearchDate != null ">
+                AND update_time BETWEEN #{entity.beginSearchDate} AND #{entity.endSearchDate}
+            </if>
+        </where>
+        order by update_time desc
+    </sql>
+
+    <select id="findSearchDataPage" resultType="com.hgsoft.modules.querymanage.entity.TbEtcVehicleEexit">
+        <include refid="baseSelect"/>
+    </select>
+    <select id="findSearchDataAll" resultType="com.hgsoft.modules.querymanage.entity.TbEtcVehicleEexit">
+        <include refid="baseSelect"/>
+    </select>
+
+</mapper>

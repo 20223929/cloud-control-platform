@@ -1,0 +1,203 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.querymanage.mapper.TbOnlineRefundEexitMapper">
+
+    <resultMap type="com.hgsoft.modules.querymanage.entity.TbOnlineRefundEexit" id="BaseResultMap" autoMapping="true">
+        <id column="sys_id" property="sysId"/>
+        <!--    	<result column="refund_time" property="refundTime" />-->
+        <!--    	<result column="merchant_group_id_name" property="merchantGroupIdName" />-->
+        <!--    	<result column="merchant_id_name" property="merchantIdName" />-->
+        <!--    	<result column="site_id_name" property="siteIdName" />-->
+        <!--    	<result column="refund_type" property="refundType" />-->
+        <!--    	<result column="refund_type_name" property="refundTypeName" />-->
+        <!--    	<result column="service_type_name" property="serviceTypeName" />-->
+        <result column="refund_trans_id" property="refundTransId"/>
+        <result column="transaction_id" property="transactionId"/>
+        <result column="merchant_group_id" property="merchantGroupId"/>
+        <result column="merchant_id" property="merchantId"/>
+        <result column="site_id" property="siteId"/>
+        <result column="en_time" property="enTime"/>
+        <result column="ex_time" property="exTime"/>
+        <result column="trans_time" property="transTime"/>
+        <result column="vehicle_plate" property="vehiclePlate"/>
+        <result column="service_type" property="serviceType"/>
+        <result column="merchant_discount_fee" property="merchantDiscountFee"/>
+        <result column="refund_order_id" property="refundOrderId"/>
+        <result column="bank_refund_order_id" property="bankRefundOrderId"/>
+        <result column="refund_fee" property="refundFee"/>
+        <result column="bank_deduction_order_id" property="bankDeductionOrderId"/>
+            	<result column="refund_state" property="refundState" />
+        <result column="tb_refund_apply_sys_id" property="tbRefundApplySysId"/>
+    </resultMap>
+
+    <sql id="tbOnlineRefundEexitColumns">
+        a.sys_id AS sysId,
+-- 		a.refund_time AS refundTime,
+-- 		a.refund_type AS refundType,
+		a.refund_trans_id AS refundTransId,
+		a.transaction_id AS transactionId,
+		a.merchant_group_id AS merchantGroupId,
+		a.merchant_id AS merchantId,
+		a.site_id AS siteId,
+		a.en_time AS enTime,
+		a.ex_time AS exTime,
+		a.trans_time AS transTime,
+		a.vehicle_plate AS vehiclePlate,
+		a.service_type AS serviceType,
+		format(a.merchant_discount_fee/100,2) AS merchantDiscountFee,
+		a.refund_order_id AS refundOrderId,
+		a.bank_refund_order_id AS bankRefundOrderId,
+		format(a.refund_fee/100,2) AS refundFee,
+		a.bank_deduction_order_id AS bankDeductionOrderId,
+-- 		a.refund_state AS refundState,
+		a.tb_refund_apply_sys_id AS tbRefundApplySysId
+    </sql>
+
+    <sql id="tbOnlineRefundEexitJoins">
+    </sql>
+
+    <sql id="refundEexitLeftJoins">
+        select *
+        from (select a.refund_complete_time                                       applyTime,
+                     a.trans_time                                                 transTime,
+                     a.refund_trans_id                                            refundTransId,
+                     a.refund_order_id                                            refundOrderId,
+                     a.transaction_id                                             transactionId,
+                     b.refund_apply_no                                            refundApplyNo,
+                     a.service_type                                               serviceType,
+                     a.merchant_group_id                                          merchantGroupId,
+                     a.merchant_id                                                merchantId,
+                     a.site_id                                                    siteId,
+                     a.vehicle_plate                                              vehiclePlate,
+                     a.vehicle_color                                              vehicleColor,
+                     case a.refund_fee when a.merchant_real_fee then 1 else 2 end refundType,
+                     format(a.merchant_real_fee / 100, 2)                         merchantRealFee,
+                     format(a.merchant_discount_fee / 100, 2)                     merchantDiscountFee,
+                     format(a.refund_fee / 100, 2)                                refundFee,
+                     a.refund_state                                               refundState,
+                     a.tb_refund_apply_sys_id                                     tbRefundApplySysId
+              from tb_online_refund_eexit a
+                       left join tb_refund_apply b on a.tb_refund_apply_sys_id = b.sys_id) a
+    </sql>
+
+    <select id="getById" resultType="com.hgsoft.modules.querymanage.entity.TbOnlineRefundEexit">
+        <include refid="refundEexitLeftJoins"/>
+        <include refid="tbOnlineRefundEexitJoins"/>
+        WHERE a.sysId = #{sys_id}
+    </select>
+
+
+    <select id="getByEntity" resultType="com.hgsoft.modules.querymanage.entity.TbOnlineRefundEexit">
+        SELECT
+        <include refid="tbOnlineRefundEexitColumns"/>
+        FROM tb_online_refund_eexit a
+        <include refid="tbOnlineRefundEexitJoins"/>
+        WHERE a.sysId = #{sys_id}
+    </select>
+
+    <select id="findPage" resultType="com.hgsoft.modules.querymanage.entity.TbOnlineRefundEexit">
+        <include refid="refundEexitLeftJoins"/>
+        <include refid="tbOnlineRefundEexitJoins"/>
+        <where>
+
+            ${entity.dataScope}
+            <if test="entity.beginRefundTime != null and entity.endRefundTime != null ">
+                AND a.applyTime BETWEEN #{entity.beginRefundTime} AND #{entity.endRefundTime}
+            </if>
+            <if test="entity.refundTransId != null and entity.refundTransId != ''">
+                <bind name="likeRefundTransId" value="'%' + entity.refundTransId + '%'"/>
+                AND a.refundTransId LIKE #{likeRefundTransId}
+            </if>
+            <if test="entity.transactionId != null and entity.transactionId != ''">
+                <bind name="likeTransactionId" value="'%' + entity.transactionId + '%'"/>
+                AND a.transactionId LIKE #{likeTransactionId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND a.merchantGroupId = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND a.merchantId = #{entity.merchantId}
+            </if>
+            <if test="entity.refundState != null">
+                AND a.refundState = #{entity.refundState}
+            </if>
+            <if test="entity.siteId != null and entity.siteId != ''">
+                AND a.siteId = #{entity.siteId}
+            </if>
+            <if test="entity.vehiclePlate != null and entity.vehiclePlate != ''">
+                <bind name="likeVehiclePlate" value="'%' + entity.vehiclePlate + '%'"/>
+                AND a.vehiclePlate LIKE #{likeVehiclePlate}
+            </if>
+            <if test="entity.serviceType != null and entity.serviceType != ''">
+                AND a.serviceType = #{entity.serviceType}
+            </if>
+            <if test="entity.refundApplyNo != null and entity.refundApplyNo != ''">
+                <bind name="likeRefundApplyNo" value="'%' + entity.refundApplyNo + '%'"/>
+                AND a.refundApplyNo LIKE #{likeRefundApplyNo}
+            </if>
+        </where>
+
+    </select>
+
+    <select id="findList" resultType="com.hgsoft.modules.querymanage.entity.TbOnlineRefundEexit">
+        <include refid="refundEexitLeftJoins"/>
+        <include refid="tbOnlineRefundEexitJoins"/>
+        <where>
+
+            ${dataScope}
+            <if test="beginRefundTime != null and endRefundTime != null ">
+                AND a.applyTime BETWEEN #{beginRefundTime} AND #{endRefundTime}
+            </if>
+            <if test="refundTransId != null and refundTransId != ''">
+                <bind name="likeRefundTransId" value="'%' + refundTransId + '%'"/>
+                AND a.refundTransId LIKE #{likeRefundTransId}
+            </if>
+            <if test="transactionId != null and transactionId != ''">
+                <bind name="likeTransactionId" value="'%' + transactionId + '%'"/>
+                AND a.transactionId LIKE #{likeTransactionId}
+            </if>
+            <if test="merchantGroupId != null and merchantGroupId != ''">
+                AND a.merchantGroupId = #{merchantGroupId}
+            </if>
+            <if test="merchantId != null and merchantId != ''">
+                AND a.merchantId = #{merchantId}
+            </if>
+            <if test="refundState != null">
+                AND a.refundState = #{refundState}
+            </if>
+            <if test="siteId != null and siteId != ''">
+                AND a.siteId = #{siteId}
+            </if>
+            <if test="vehiclePlate != null and vehiclePlate != ''">
+                <bind name="likeVehiclePlate" value="'%' + vehiclePlate + '%'"/>
+                AND a.vehiclePlate LIKE #{likeVehiclePlate}
+            </if>
+            <if test="serviceType != null">
+                AND a.serviceType = #{serviceType}
+            </if>
+            <if test="refundApplyNo != null and refundApplyNo != ''">
+                <bind name="likeRefundApplyNo" value="'%' + refundApplyNo + '%'"/>
+                AND a.refundApplyNo LIKE #{likeRefundApplyNo}
+            </if>
+        </where>
+        order by a.applyTime desc
+    </select>
+
+    <select id="findAllList" resultType="com.hgsoft.modules.querymanage.entity.TbOnlineRefundEexit">
+        SELECT
+        <include refid="tbOnlineRefundEexitColumns"/>
+        FROM tb_online_refund_eexit a
+        <include refid="tbOnlineRefundEexitJoins"/>
+        <where>
+            ${dataScope}
+        </where>
+    </select>
+
+    <!-- 根据实体名称和字段名称和字段值获取唯一记录 -->
+    <select id="findUniqueByProperty" resultType="com.hgsoft.modules.querymanage.entity.TbOnlineRefundEexit"
+            statementType="STATEMENT">
+        <include refid="refundEexitLeftJoins"/>
+        where ${propertyName} = '${value}'
+    </select>
+
+</mapper>

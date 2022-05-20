@@ -1,0 +1,153 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.settlement.mapper.TbBankSettlementDetailMapper">
+
+	<resultMap type="com.hgsoft.modules.settlement.entity.TbBankSettlementDetail" id="BaseResultMap" autoMapping="true">
+		<id column="transaction_id" property="transactionId" />
+    	<result column="eexit_type" property="eexitType" />
+    	<result column="bank_trans_date" property="bankTransDate" />
+    	<result column="deduction_order_id" property="deductionOrderId" />
+    	<result column="vehicle_plate" property="vehiclePlate" />
+    	<result column="vehicle_color" property="vehicleColor" />
+    	<result column="merchant_group_id" property="merchantGroupId" />
+    	<result column="merchant_id" property="merchantId" />
+    	<result column="site_id" property="siteId" />
+    	<result column="service_type" property="serviceType" />
+    	<result column="merchant_real_fee" property="merchantRealFee" />
+    	<result column="merchant_discount_fee" property="merchantDiscountFee" />
+	</resultMap>
+
+	<sql id="tbBankSettlementDetailColumns">
+		a.eexit_type AS "eexitType",
+		a.bank_trans_date AS "bankTransDate",
+		a.transaction_id AS "transactionId",
+		a.deduction_order_id AS "deductionOrderId",
+		a.vehicle_plate AS "vehiclePlate",
+		a.vehicle_color AS "vehicleColor",
+		a.merchant_group_id AS "merchantGroupId",
+		a.merchant_id AS "merchantId",
+		a.site_id AS "siteId",
+		a.service_type AS "serviceType",
+		a.merchant_real_fee AS "merchantRealFee",
+		a.merchant_discount_fee AS "merchantDiscountFee"
+	</sql>
+
+	<sql id="tbBankSettlementDetailJoins">
+	</sql>
+
+
+	<select id="getById" resultType="com.hgsoft.modules.settlement.entity.TbBankSettlementDetail" >
+		SELECT
+			<include refid="tbBankSettlementDetailColumns"/>
+		FROM tb_bank_settlement_detail a
+		<include refid="tbBankSettlementDetailJoins"/>
+		WHERE a.transactionId = #{transaction_id}
+	</select>
+
+
+	<select id="getByEntity" resultType="com.hgsoft.modules.settlement.entity.TbBankSettlementDetail" >
+		SELECT
+			<include refid="tbBankSettlementDetailColumns"/>
+		FROM tb_bank_settlement_detail a
+		<include refid="tbBankSettlementDetailJoins"/>
+		WHERE a.transactionId = #{transaction_id}
+	</select>
+
+	<select id="findPage" resultType="com.hgsoft.modules.settlement.entity.TbBankSettlementDetail" >
+		SELECT
+			<include refid="tbBankSettlementDetailColumns" />
+		FROM tb_bank_settlement_detail a
+		<include refid="tbBankSettlementDetailJoins"/>
+		<where>
+			
+			${entity.dataScope}
+		</where>
+	</select>
+
+	<select id="findList" resultType="com.hgsoft.modules.settlement.entity.TbBankSettlementDetail" >
+		SELECT
+			<include refid="tbBankSettlementDetailColumns"/>
+		FROM tb_bank_settlement_detail a
+		<include refid="tbBankSettlementDetailJoins"/>
+		<where>
+			
+			${dataScope}
+		</where>
+	</select>
+
+	<select id="findAllList" resultType="com.hgsoft.modules.settlement.entity.TbBankSettlementDetail" >
+		SELECT
+			<include refid="tbBankSettlementDetailColumns"/>
+		FROM tb_bank_settlement_detail a
+		<include refid="tbBankSettlementDetailJoins"/>
+		<where>
+			
+			${dataScope}
+		</where>
+	</select>
+
+	<insert id="insertEntity">
+		INSERT INTO tb_bank_settlement_detail(
+			eexit_type,
+			bank_trans_date,
+			transaction_id,
+			deduction_order_id,
+			vehicle_plate,
+			vehicle_color,
+			merchant_group_id,
+			merchant_id,
+			site_id,
+			service_type,
+			merchant_real_fee,
+			merchant_discount_fee
+		) VALUES (
+            #{eexitType},
+            #{bankTransDate},
+            #{transactionId},
+            #{deductionOrderId},
+            #{vehiclePlate},
+            #{vehicleColor},
+            #{merchantGroupId},
+            #{merchantId},
+            #{siteId},
+            #{serviceType},
+            #{merchantRealFee},
+            #{merchantDiscountFee}
+		)
+	</insert>
+
+	<update id="updateEntity">
+		UPDATE tb_bank_settlement_detail
+		<trim prefix="set" suffixOverrides=",">
+                  eexit_type = #{eexitType},
+                  bank_trans_date = #{bankTransDate},
+                  transaction_id = #{transactionId},
+                  deduction_order_id = #{deductionOrderId},
+                  vehicle_plate = #{vehiclePlate},
+                  vehicle_color = #{vehicleColor},
+                  merchant_group_id = #{merchantGroupId},
+                  merchant_id = #{merchantId},
+                  site_id = #{siteId},
+                  service_type = #{serviceType},
+                  merchant_real_fee = #{merchantRealFee},
+                  merchant_discount_fee = #{merchantDiscountFee}
+        </trim>
+		WHERE a.transactionId = {"#"}{transaction_id}
+	</update>
+
+
+	<delete id="removeById">
+		DELETE
+		FROM tb_bank_settlement_detail
+		WHERE a.transactionId = {"#"}{transaction_id}
+	</delete>
+
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+		UPDATE tb_bank_settlement_detail SET
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE transactionId = #{transaction_id}
+	</update>
+
+
+</mapper>

@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.merchant.mapper.SiteMapper">
+
+	<resultMap type="com.hgsoft.modules.merchant.entity.Site" id="BaseResultMap" autoMapping="true">
+		<id column="platform_site_id" property="platformSiteId" />
+    	<result column="platform_merchant_id" property="platformMerchantId" />
+    	<result column="center_site_id" property="centerSiteId" />
+    	<result column="bank_site_id" property="bankSiteId" />
+    	<result column="name" property="name" />
+    	<result column="address" property="address" />
+    	<result column="lat" property="lat" />
+    	<result column="lng" property="lng" />
+    	<result column="province_num" property="provinceNum" />
+    	<result column="start_time" property="startTime" />
+    	<result column="end_time" property="endTime" />
+    	<result column="creator" property="creator" />
+    	<result column="createtime" property="createtime" />
+    	<result column="modifier" property="modifier" />
+    	<result column="modifytime" property="modifytime" />
+	</resultMap>
+
+	<sql id="siteColumns">
+		a.platform_merchant_id AS "platformMerchantId",
+		a.platform_site_id AS "platformSiteId",
+		a.center_site_id AS "centerSiteId",
+		a.bank_site_id AS "bankSiteId",
+		a.name AS "name",
+		a.address AS "address",
+		a.lat AS "lat",
+		a.lng AS "lng",
+		a.province_num AS "provinceNum",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.creator AS "creator",
+		a.createtime AS "createtime",
+		a.modifier AS "modifier",
+		a.modifytime AS "modifytime"
+	</sql>
+
+	<sql id="siteJoins">
+	</sql>
+
+
+	<select id="getById" resultType="com.hgsoft.modules.merchant.entity.Site" >
+		SELECT
+			<include refid="siteColumns"/>
+		FROM tb_site a
+		<include refid="siteJoins"/>
+		WHERE a.platformSiteId = #{platform_site_id}
+	</select>
+
+
+	<select id="getByEntity" resultType="com.hgsoft.modules.merchant.entity.Site" >
+		SELECT
+			<include refid="siteColumns"/>
+		FROM tb_site a
+		<include refid="siteJoins"/>
+		WHERE a.platformSiteId = #{platform_site_id}
+	</select>
+
+	<select id="findPage" resultType="com.hgsoft.modules.merchant.entity.Site" >
+		SELECT
+			<include refid="siteColumns" />
+		FROM tb_site a
+		<include refid="siteJoins"/>
+		<where>
+			
+			${entity.dataScope}
+			<if test="entity.name != null and entity.name != ''">
+            <bind name="likeName" value="'%' + entity.name + '%'"/>
+			AND a.name LIKE #{likeName}
+	        </if>
+		</where>
+	</select>
+
+	<select id="findList" resultType="com.hgsoft.modules.merchant.entity.Site" >
+		SELECT
+			<include refid="siteColumns"/>
+		FROM tb_site a
+		<include refid="siteJoins"/>
+		<where>
+			
+			${dataScope}
+    			<if test="name != null and name != ''">
+    			<bind name="likeName" value="'%' + name + '%'"/>
+			    AND a.name LIKE #{likeName}
+    	</if>
+		</where>
+	</select>
+
+	<select id="findAllList" resultType="com.hgsoft.modules.merchant.entity.Site" >
+		SELECT
+			<include refid="siteColumns"/>
+		FROM tb_site a
+		<include refid="siteJoins"/>
+		<where>
+			
+			${dataScope}
+		</where>
+	</select>
+
+	<select id="findSiteIdByAgentId" resultType="java.lang.String">
+		select platform_site_id platformSiteId from tb_site where agent_id=#{agentId}
+	</select>
+
+	<insert id="insertEntity">
+		INSERT INTO tb_site(
+			platform_merchant_id,
+			platform_site_id,
+			center_site_id,
+			bank_site_id,
+			name,
+			address,
+			lat,
+			lng,
+			province_num,
+			start_time,
+			end_time,
+			creator,
+			createtime,
+			modifier,
+			modifytime
+		) VALUES (
+            #{platformMerchantId},
+            #{platformSiteId},
+            #{centerSiteId},
+            #{bankSiteId},
+            #{name},
+            #{address},
+            #{lat},
+            #{lng},
+            #{provinceNum},
+            #{startTime},
+            #{endTime},
+            #{creator},
+            #{createtime},
+            #{modifier},
+            #{modifytime}
+		)
+	</insert>
+
+	<update id="updateEntity">
+		UPDATE tb_site
+		<trim prefix="set" suffixOverrides=",">
+                  platform_merchant_id = #{platformMerchantId},
+                  platform_site_id = #{platformSiteId},
+                  center_site_id = #{centerSiteId},
+                  bank_site_id = #{bankSiteId},
+                  name = #{name},
+                  address = #{address},
+                  lat = #{lat},
+                  lng = #{lng},
+                  province_num = #{provinceNum},
+                  start_time = #{startTime},
+                  end_time = #{endTime},
+                  creator = #{creator},
+                  createtime = #{createtime},
+                  modifier = #{modifier},
+                  modifytime = #{modifytime}
+        </trim>
+		WHERE a.platformSiteId = {"#"}{platform_site_id}
+	</update>
+
+
+	<delete id="removeById">
+		DELETE
+		FROM tb_site
+		WHERE a.platformSiteId = {"#"}{platform_site_id}
+	</delete>
+
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+		UPDATE tb_site SET
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE platformSiteId = #{platform_site_id}
+	</update>
+
+</mapper>

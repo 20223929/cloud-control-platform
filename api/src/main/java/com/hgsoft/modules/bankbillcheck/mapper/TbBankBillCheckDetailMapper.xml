@@ -1,0 +1,284 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.bankbillcheck.mapper.TbBankBillCheckDetailMapper">
+
+	<resultMap type="com.hgsoft.modules.bankbillcheck.entity.TbBankBillCheckDetail" id="BaseResultMap" autoMapping="true">
+		<id column="trans_date" property="transDate" />
+		<id column="merchant_group_id" property="merchantGroupId" />
+		<id column="merchant_id" property="merchantId" />
+		<id column="site_id" property="siteId" />
+		<id column="equipment_id" property="equipmentId" />
+    	<result column="platform_total_count" property="platformTotalCount" />
+    	<result column="platform_total_amount" property="platformTotalAmount" />
+    	<result column="bank_total_count" property="bankTotalCount" />
+    	<result column="bank_total_amount" property="bankTotalAmount" />
+    	<result column="diff_total_count" property="diffTotalCount" />
+    	<result column="diff_total_amount" property="diffTotalAmount" />
+    	<result column="create_time" property="createTime" />
+	</resultMap>
+
+	<sql id="tbBankBillCheckDetailColumns">
+		a.trans_date AS "transDate",
+		a.merchant_group_id AS "merchantGroupId",
+		a.merchant_id AS "merchantId",
+		a.site_id AS "siteId",
+		a.equipment_id AS "equipmentId",
+		a.platform_total_count AS "platformTotalCount",
+		a.platform_total_amount AS "platformTotalAmount",
+		a.bank_total_count AS "bankTotalCount",
+		a.bank_total_amount AS "bankTotalAmount",
+		a.diff_total_count AS "diffTotalCount",
+		a.diff_total_amount AS "diffTotalAmount",
+		a.create_time AS "createTime"
+	</sql>
+
+	<sql id="tbBankBillCheckDetailJoins">
+	</sql>
+
+
+	<select id="getById" resultType="com.hgsoft.modules.bankbillcheck.entity.TbBankBillCheckDetail" >
+		SELECT
+			<include refid="tbBankBillCheckDetailColumns"/>
+		FROM tb_bank_bill_check_detail a
+		<include refid="tbBankBillCheckDetailJoins"/>
+		WHERE a.transDate = #{trans_date} and a.merchantGroupId = #{merchant_group_id} and a.merchantId = #{merchant_id} and a.siteId = #{site_id} and a.equipmentId = #{equipment_id}
+	</select>
+
+
+	<select id="getByEntity" resultType="com.hgsoft.modules.bankbillcheck.entity.TbBankBillCheckDetail" >
+		SELECT
+			<include refid="tbBankBillCheckDetailColumns"/>
+		FROM tb_bank_bill_check_detail a
+		<include refid="tbBankBillCheckDetailJoins"/>
+		WHERE a.transDate = #{trans_date} and a.merchantGroupId = #{merchant_group_id} and a.merchantId = #{merchant_id} and a.siteId = #{site_id} and a.equipmentId = #{equipment_id}
+	</select>
+
+	<select id="findPage" resultType="com.hgsoft.modules.bankbillcheck.entity.TbBankBillCheckDetail" >
+		SELECT
+		trans_date,
+		merchant_group_id,
+		merchant_id,
+		site_id,
+		equipment_id,
+		SUM(bank_amount) bankTotalAmount,
+		SUM(bank_count) bankTotalCount,
+		SUM(amount) platformTotalAmount ,
+		SUM(count) platformTotalCount,
+		SUM(bank_amount) - SUM(amount) as diffTotalAmount,
+		SUM(bank_count) - SUM(count) as diffTotalCount
+		FROM
+		(SELECT
+		DATE_FORMAT(c.trans_time, '%Y-%m-%d') AS trans_date,
+		c.merchant_group_id,
+		c.merchant_id,
+		c.site_id,
+		c.equipment_id,
+		c.service_type,
+		CASE
+		WHEN c.bill_result = 1 THEN c.merchant_real_fee
+		ELSE 0
+		END bank_amount,
+		CASE
+		WHEN c.bill_result = 1 THEN 1
+		ELSE 0
+		END bank_count,
+		1 AS count,
+		c.merchant_real_fee AS amount
+		FROM
+		tb_online_eexit c
+		<where>
+			${entity.dataScope}
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND c.merchant_id = #{entity.merchantId}
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND c.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND c.site_id = #{entity.siteId}
+			</if>
+			<if test="entity.equipmentId != null and entity.equipmentId != ''">
+				AND c.equipment_id= #{entity.equipmentId}
+			</if>
+			<if test="entity.transDate != null and entity.transDate!=''">
+				AND (c.trans_time &gt;= STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d') and c.trans_time &lt; date_add(STR_TO_DATE(#{entity.transDate}, '%Y-%m-%d'),interval 1 day))
+			</if>
+		</where>
+		) t
+		GROUP BY DATE_FORMAT(t.trans_date, '%Y-%m-%d') , t.merchant_group_id , t.merchant_id , t.site_id , t.equipment_id
+	</select>
+
+	<select id="findList" resultType="com.hgsoft.modules.bankbillcheck.entity.TbBankBillCheckDetail" >
+		SELECT
+		trans_date,
+		merchant_group_id,
+		merchant_id,
+		site_id,
+		equipment_id,
+		SUM(bank_amount) bankTotalAmount,
+		SUM(bank_count) bankTotalCount,
+		SUM(amount) platformTotalAmount ,
+		SUM(count) platformTotalCount,
+		SUM(bank_amount) - SUM(amount) as diffTotalAmount,
+		SUM(bank_count) - SUM(count) as diffTotalCount
+		FROM
+		(SELECT
+		DATE_FORMAT(c.trans_time, '%Y-%m-%d') AS trans_date,
+		c.merchant_group_id,
+		c.merchant_id,
+		c.site_id,
+		c.equipment_id,
+		c.service_type,
+		CASE
+		WHEN c.bill_result = 1 THEN c.merchant_real_fee
+		ELSE 0
+		END bank_amount,
+		CASE
+		WHEN c.bill_result = 1 THEN 1
+		ELSE 0
+		END bank_count,
+		1 AS count,
+		c.merchant_real_fee AS amount
+		FROM
+		tb_online_eexit c
+		<where>
+			${dataScope}
+			<if test="merchantId != null and merchantId != ''">
+				AND c.merchant_id = #{merchantId}
+			</if>
+			<if test="merchantGroupId != null and merchantGroupId != ''">
+				AND c.merchant_group_id = #{merchantGroupId}
+			</if>
+			<if test="siteId != null and siteId != ''">
+				AND c.site_id = #{siteId}
+			</if>
+			<if test="equipmentId != null and equipmentId != ''">
+				AND c.equipment_id= #{equipmentId}
+			</if>
+			<if test="transDate != null and transDate!=''">
+				AND (c.trans_time &gt;= STR_TO_DATE(#{transDate}, '%Y-%m-%d') and c.trans_time &lt; date_add(STR_TO_DATE(#{transDate}, '%Y-%m-%d'),interval 1 day))
+			</if>
+		</where>
+		) t
+		GROUP BY DATE_FORMAT(t.trans_date, '%Y-%m-%d') , t.merchant_group_id , t.merchant_id , t.site_id , t.equipment_id
+	</select>
+
+	<select id="findAllList" resultType="com.hgsoft.modules.bankbillcheck.entity.TbBankBillCheckDetail" >
+		SELECT
+		trans_date,
+		merchant_group_id,
+		merchant_id,
+		site_id,
+		equipment_id,
+		SUM(bank_amount) bankTotalAmount,
+		SUM(bank_count) bankTotalCount,
+		SUM(amount) platformTotalAmount ,
+		SUM(count) platformTotalCount,
+		SUM(bank_amount) - SUM(amount) as diffTotalAmount,
+		SUM(bank_count) - SUM(count) as diffTotalCount
+		FROM
+		(SELECT
+		DATE_FORMAT(c.trans_time, '%Y-%m-%d') AS trans_date,
+		c.merchant_group_id,
+		c.merchant_id,
+		c.site_id,
+		c.equipment_id,
+		c.service_type,
+		CASE
+		WHEN c.bill_result = 1 THEN c.merchant_real_fee
+		ELSE 0
+		END bank_amount,
+		CASE
+		WHEN c.bill_result = 1 THEN 1
+		ELSE 0
+		END bank_count,
+		1 AS count,
+		c.merchant_real_fee AS amount
+		FROM
+		tb_online_eexit c
+		<where>
+			<if test="merchantId != null and merchantId != ''">
+				AND c.merchant_id = #{merchantId}
+			</if>
+			<if test="merchantGroupId != null and merchantGroupId != ''">
+				AND c.merchant_group_id = #{merchantGroupId}
+			</if>
+			<if test="siteId != null and siteId != ''">
+				AND c.site_id = #{siteId}
+			</if>
+			<if test="equipmentId != null and equipmentId != ''">
+				AND c.equipment_id= #{equipmentId}
+			</if>
+			<if test="transDate != null and transDate!=''">
+				AND (c.trans_time &gt;= STR_TO_DATE(#{transDate}, '%Y-%m-%d') and c.trans_time &lt; date_add(STR_TO_DATE(#{transDate}, '%Y-%m-%d'),interval 1 day))
+			</if>
+		</where>
+		) t
+		GROUP BY DATE_FORMAT(t.trans_date, '%Y-%m-%d') , t.merchant_group_id , t.merchant_id , t.site_id , t.equipment_id
+	</select>
+
+	<insert id="insertEntity">
+		INSERT INTO tb_bank_bill_check_detail(
+			trans_date,
+			merchant_group_id,
+			merchant_id,
+			site_id,
+			equipment_id,
+			platform_total_count,
+			platform_total_amount,
+			bank_total_count,
+			bank_total_amount,
+			diff_total_count,
+			diff_total_amount,
+			create_time
+		) VALUES (
+            #{transDate},
+            #{merchantGroupId},
+            #{merchantId},
+            #{siteId},
+            #{equipmentId},
+            #{platformTotalCount},
+            #{platformTotalAmount},
+            #{bankTotalCount},
+            #{bankTotalAmount},
+            #{diffTotalCount},
+            #{diffTotalAmount},
+            #{createTime}
+		)
+	</insert>
+
+	<update id="updateEntity">
+		UPDATE tb_bank_bill_check_detail
+		<trim prefix="set" suffixOverrides=",">
+                  trans_date = #{transDate},
+                  merchant_group_id = #{merchantGroupId},
+                  merchant_id = #{merchantId},
+                  site_id = #{siteId},
+                  equipment_id = #{equipmentId},
+                  platform_total_count = #{platformTotalCount},
+                  platform_total_amount = #{platformTotalAmount},
+                  bank_total_count = #{bankTotalCount},
+                  bank_total_amount = #{bankTotalAmount},
+                  diff_total_count = #{diffTotalCount},
+                  diff_total_amount = #{diffTotalAmount},
+                  create_time = #{createTime}
+        </trim>
+		WHERE a.transDate = {"#"}{trans_date} and a.merchantGroupId = {"#"}{merchant_group_id} and a.merchantId = {"#"}{merchant_id} and a.siteId = {"#"}{site_id} and a.equipmentId = {"#"}{equipment_id}
+	</update>
+
+
+	<delete id="removeById">
+		DELETE
+		FROM tb_bank_bill_check_detail
+		WHERE a.transDate = {"#"}{trans_date} and a.merchantGroupId = {"#"}{merchant_group_id} and a.merchantId = {"#"}{merchant_id} and a.siteId = {"#"}{site_id} and a.equipmentId = {"#"}{equipment_id}
+	</delete>
+
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+		UPDATE tb_bank_bill_check_detail SET
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE transDate = #{trans_date} and merchantGroupId = #{merchant_group_id} and merchantId = #{merchant_id} and siteId = #{site_id} and equipmentId = #{equipment_id}
+	</update>
+
+
+</mapper>

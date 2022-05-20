@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.systemmanage.mapper.PaySignMapper">
+
+    <resultMap type="com.hgsoft.modules.systemmanage.entity.shanxi.PaySign" id="BaseResultMap" autoMapping="true">
+        <id column="sys_id" property="sysId"/>
+        <result column="sign_time" property="signTime"/>
+        <result column="sign_agreement_no" property="signAgreementNo"/>
+        <result column="sign_channel" property="bankName"/>
+        <result column="bank_card_type" property="bankCardType"/>
+        <result column="user_name" property="userName"/>
+        <result column="id_no" property="idNo"/>
+        <result column="sign_phone" property="bindPhone"/>
+        <result column="sign_state" property="signState"/>
+        <result column="status" property="status"/>
+        <result column="vehicle_plate" property="vehicleNumber"/>
+        <result column="vehicle_color" property="vehicleColor"/>
+        <result column="vehicle_type" property="vehicleClass"/>
+        <result column="card_id" property="etcCardId"/>
+        <result column="obu_id" property="obuId"/>
+        <result column="tel" property="issuerPhone"/>
+    </resultMap>
+
+    <select id="findPage" resultMap="BaseResultMap">
+        select a.sys_id,date_format(a.sign_time,'%Y-%m-%d %H:%i:%s') sign_time,a.sign_agreement_no,a.sign_channel,a.vehicle_plate,a.vehicle_color,b.vehicle_type,b.card_id,b.obu_id,a.bank_card_type,
+               a.user_name,a.id_no,b.tel,a.sign_phone,a.sign_state,a.status
+        from pay_sign a
+        left join tb_issue_info b
+        on concat(concat(a.vehicle_plate,'_'),a.vehicle_color) = b.vehicle_id
+        <where>
+            <if test="entity.timeScope != null and entity.timeScope.length > 0">
+                and a.sign_time between str_to_date(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') and str_to_date(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="entity.vehicleNumber != null and entity.vehicleNumber != ''">
+                and a.vehicle_plate = #{entity.vehicleNumber}
+            </if>
+            <if test="entity.vehicleColor != null">
+                and a.vehicle_color = #{entity.vehicleColor}
+            </if>
+            <if test="entity.issuerPhone != null and entity.issuerPhone != ''">
+                and b.tel = #{entity.issuerPhone}
+            </if>
+            <if test="entity.obuId != null and entity.obuId != ''">
+                and b.obu_id = #{entity.obuId}
+            </if>
+            <if test="entity.etcCardId != null and entity.etcCardId != ''">
+                and b.card_id = #{entity.etcCardId}
+            </if>
+            <if test="entity.signAgreementNo != null and entity.signAgreementNo != ''">
+                and a.sign_agreement_no = #{entity.signAgreementNo}
+            </if>
+            <if test="entity.status != null">
+                and a.status = #{entity.status}
+            </if>
+        </where>
+        order by a.sign_time desc,a.sign_agreement_no,a.sign_channel
+    </select>
+
+    <select id="findPageSC" resultMap="BaseResultMap">
+        select a.sys_id,date_format(a.auth_time,'%Y-%m-%d %H:%i:%s') sign_time,a.agreement_id sign_agreement_no,'ZHIHUIFU' sign_channel,b.vehicle_plate vehicle_plate,b.vehicle_plate_color vehicle_color,c.vehicle_class vehicle_type,a.card_id,d.serial_number obu_id,b.bank_id bank_card_type,
+        c.name user_name,c.id_num id_no,c.tel,b.phone sign_phone,a.auth_result sign_state,a.status
+        from tb_auth_valid_info a
+        left join tb_auth_req_info b
+        on a.transaction_id = b.transaction_id
+        left join tb_user_integration_info c
+        on b.vehicle_plate = c.vehicle_plate and b.vehicle_plate_color = c.vehicle_plate_color
+        left join tb_user_integration_obu d
+        on d.head_id = c.sys_id
+        <where>
+            <if test="entity.timeScope != null and entity.timeScope.length > 0">
+                and a.auth_time between str_to_date(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') and str_to_date(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="entity.vehicleNumber != null and entity.vehicleNumber != ''">
+                and b.vehicle_plate = #{entity.vehicleNumber}
+            </if>
+            <if test="entity.vehicleColor != null">
+                and b.vehicle_plate_color = #{entity.vehicleColor}
+            </if>
+            <if test="entity.issuerPhone != null and entity.issuerPhone != ''">
+                and c.tel = #{entity.issuerPhone}
+            </if>
+            <if test="entity.obuId != null and entity.obuId != ''">
+                and d.serial_number = #{entity.obuId}
+            </if>
+            <if test="entity.etcCardId != null and entity.etcCardId != ''">
+                and a.card_id = #{entity.etcCardId}
+            </if>
+            <if test="entity.signAgreementNo != null and entity.signAgreementNo != ''">
+                and a.agreement_id = #{entity.signAgreementNo}
+            </if>
+            <if test="entity.status != null">
+                and a.status = #{entity.status}
+            </if>
+        </where>
+        order by a.auth_time desc,a.agreement_id
+    </select>
+
+    <select id="findListSC" resultMap="BaseResultMap">
+        select a.sys_id,date_format(a.auth_time,'%Y-%m-%d %H:%i:%s') sign_time,a.agreement_id sign_agreement_no,'ZHIHUIFU' sign_channel,b.vehicle_plate vehicle_plate,b.vehicle_plate_color vehicle_color,c.vehicle_class vehicle_type,a.card_id,d.serial_number obu_id,b.bank_id bank_card_type,
+        c.name user_name,c.id_num id_no,c.tel,b.phone sign_phone,a.auth_result sign_state,a.status
+        from tb_auth_valid_info a
+        left join tb_auth_req_info b
+        on a.transaction_id = b.transaction_id
+        left join tb_user_integration_info c
+        on b.vehicle_plate = c.vehicle_plate and b.vehicle_plate_color = c.vehicle_plate_color
+        left join tb_user_integration_obu d
+        on d.head_id = c.sys_id
+        <where>
+            <if test="entity.timeScope != null and entity.timeScope.length > 0">
+                and a.auth_time between str_to_date(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') and str_to_date(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="entity.vehicleNumber != null and entity.vehicleNumber != ''">
+                and b.vehicle_plate = #{entity.vehicleNumber}
+            </if>
+            <if test="entity.vehicleColor != null">
+                and b.vehicle_plate_color = #{entity.vehicleColor}
+            </if>
+            <if test="entity.issuerPhone != null and entity.issuerPhone != ''">
+                and c.tel = #{entity.issuerPhone}
+            </if>
+            <if test="entity.obuId != null and entity.obuId != ''">
+                and d.serial_number = #{entity.obuId}
+            </if>
+            <if test="entity.etcCardId != null and entity.etcCardId != ''">
+                and a.card_id = #{entity.etcCardId}
+            </if>
+            <if test="entity.signAgreementNo != null and entity.signAgreementNo != ''">
+                and a.agreement_id = #{entity.signAgreementNo}
+            </if>
+            <if test="entity.status != null">
+                and a.status = #{entity.status}
+            </if>
+        </where>
+        order by a.auth_time desc,a.agreement_id
+    </select>
+
+    <select id="findList" resultMap="BaseResultMap">
+        select a.sys_id,date_format(a.sign_time,'%Y-%m-%d %H:%i:%s') sign_time,a.sign_agreement_no,a.sign_channel,a.vehicle_plate,a.vehicle_color,b.vehicle_type,b.card_id,b.obu_id,a.bank_card_type,
+        a.user_name,a.id_no,b.tel,a.sign_phone,a.sign_state,a.status
+        from pay_sign a
+        left join tb_issue_info b
+        on concat(concat(a.vehicle_plate,'_'),a.vehicle_color) = b.vehicle_id
+        <where>
+            <if test="entity.timeScope != null and entity.timeScope.length > 0">
+                and a.sign_time between str_to_date(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') and str_to_date(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="entity.vehicleNumber != null and entity.vehicleNumber != ''">
+                and a.vehicle_plate = #{entity.vehicleNumber}
+            </if>
+            <if test="entity.vehicleColor != null">
+                and a.vehicle_color = #{entity.vehicleColor}
+            </if>
+            <if test="entity.issuerPhone != null and entity.issuerPhone != ''">
+                and b.tel = #{entity.issuerPhone}
+            </if>
+            <if test="entity.obuId != null and entity.obuId != ''">
+                and b.obu_id = #{entity.obuId}
+            </if>
+            <if test="entity.etcCardId != null and entity.etcCardId != ''">
+                and b.card_id = #{entity.etcCardId}
+            </if>
+            <if test="entity.signAgreementNo != null and entity.signAgreementNo != ''">
+                and a.sign_agreement_no = #{entity.signAgreementNo}
+            </if>
+            <if test="entity.status != null">
+                and a.status = #{entity.status}
+            </if>
+        </where>
+        order by a.sign_time desc,a.sign_agreement_no,a.sign_channel desc
+    </select>
+
+    <update id="updateStatus">
+        update pay_sign set status = #{status},update_time = now() where sys_id = #{sysId}
+    </update>
+
+    <update id="updateStatusSC">
+        update tb_auth_valid_info set status = #{status},update_time = now() where sys_id = #{sysId}
+    </update>
+</mapper>

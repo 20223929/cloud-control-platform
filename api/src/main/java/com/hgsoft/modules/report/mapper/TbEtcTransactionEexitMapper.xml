@@ -1,0 +1,358 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.report.mapper.TbEtcTransactionEexitMapper">
+
+	<resultMap type="com.hgsoft.modules.report.entity.MerchantAccountReport" id="BaseResultMap" autoMapping="true">
+		<result column="MERCHANT_GROUP_ID" property="merchantGroupId"/>
+		<result column="MERCHANT_ID" property="merchantId"/>
+		<result column="SITE_ID" property="siteId"/>
+		<result column="TRADE_DAY" property="tradeDay"/>
+		<result column="SETTLEMENT_COUNT" property="settlementCount"/>
+		<result column="SETTLEMENT_MERCHANT_TOTAL_FEE" property="settlementMerchantTotalFee"/>
+		<result column="UNSETTLEMENT_COUNT" property="unsettlementCount"/>
+		<result column="UNSETTLEMENT_MERCHANT_TOTAL_FEE" property="unsettlementMerchantTotalFee"/>
+		<result column="ETC_TOTAL_COUNT" property="etcTotalCount"/>
+		<result column="BANK_TOTAL_COUNT" property="bankTotalCount"/>
+		<result column="ETC_MERCHANT_TOTAL_FEE" property="etcMerchantTotalFee"/>
+		<result column="BANK_MERCHANT_TOTAL_FEE" property="bankMerchantTotalFee"/>
+		<result column="BANK_REFUND_COUNT" property="bankRefundCount"/>
+		<result column="BANK_MERCHANT_REFUND_TOTAL_FEE" property="bankMerchantRefundTotalFee"/>
+		<result column="TOTAL_COUNT" property="totalCount"/>
+		<result column="MERCHANT_TOTAL_FEE" property="merchantTotalFee"/>
+	</resultMap>
+
+	<select id="findPage" resultMap="BaseResultMap" >
+		select * from
+		(SELECT A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.TRADE_DAY,SUM(A.SETTLEMENT_COUNT)
+		SETTLEMENT_COUNT,SUM(A.UNSETTLEMENT_COUNT) UNSETTLEMENT_COUNT,
+		SUM(A.SETTLEMENT_MERCHANT_TOTAL_FEE) SETTLEMENT_MERCHANT_TOTAL_FEE,SUM(A.UNSETTLEMENT_MERCHANT_TOTAL_FEE)
+		UNSETTLEMENT_MERCHANT_TOTAL_FEE,
+		SUM(A.ETC_TOTAL_COUNT) ETC_TOTAL_COUNT,SUM(A.BANK_TOTAL_COUNT) BANK_TOTAL_COUNT,SUM(A.ETC_MERCHANT_TOTAL_FEE)
+		ETC_MERCHANT_TOTAL_FEE,
+		SUM(A.BANK_MERCHANT_TOTAL_FEE) BANK_MERCHANT_TOTAL_FEE,SUM(A.BANK_REFUND_COUNT)
+		BANK_REFUND_COUNT,SUM(A.BANK_MERCHANT_REFUND_TOTAL_FEE) BANK_MERCHANT_REFUND_TOTAL_FEE,
+		SUM(A.ETC_TOTAL_COUNT + A.BANK_TOTAL_COUNT - A.BANK_REFUND_COUNT) TOTAL_COUNT,SUM(A.ETC_MERCHANT_TOTAL_FEE +
+		A.BANK_MERCHANT_TOTAL_FEE - A.BANK_MERCHANT_REFUND_TOTAL_FEE) MERCHANT_TOTAL_FEE
+		FROM (
+		SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}') TRADE_DAY,SUM(CASE
+		WHEN SETTLEMENT_CONFIRM_STATE = 2 THEN 1 ELSE 0 END)
+		SETTLEMENT_COUNT,SUM(CASE WHEN (SETTLEMENT_CONFIRM_STATE = 1) THEN 1 ELSE 0 END)
+		UNSETTLEMENT_COUNT,
+		SUM(CASE WHEN SETTLEMENT_CONFIRM_STATE = 2 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+		SETTLEMENT_MERCHANT_TOTAL_FEE,
+		SUM(CASE WHEN (SETTLEMENT_CONFIRM_STATE = 1) THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+		UNSETTLEMENT_MERCHANT_TOTAL_FEE,
+		SUM(CASE WHEN CLEAR_RESULT IN(0,1,2) THEN 1 ELSE 0 END) ETC_TOTAL_COUNT,0 BANK_TOTAL_COUNT,SUM(CASE WHEN
+		CLEAR_RESULT IN(0,1,2) THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) ETC_MERCHANT_TOTAL_FEE,0
+		BANK_MERCHANT_TOTAL_FEE,
+		0 BANK_REFUND_COUNT,0 BANK_MERCHANT_REFUND_TOTAL_FEE
+		FROM TB_ETC_TRANSACTION_EEXIT
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">AND TRANS_TIME BETWEEN
+				STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+				<if test="entity.userMerchantParam != null">
+					<choose>
+						<when test="entity.userMerchantParam.nodeLevel == 1">
+							AND MERCHANT_GROUP_ID IN
+							<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+								#{item}
+							</foreach>
+						</when>
+						<when test="entity.userMerchantParam.nodeLevel == 2">
+							AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+						</when>
+						<otherwise>
+							AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+			GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}')
+			UNION ALL
+			SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}') TRADE_DAY,SUM(CASE WHEN DEDUCTION_STATE = 1 THEN 1 ELSE 0 END)
+			SETTLEMENT_COUNT,SUM(CASE WHEN DEDUCTION_STATE IS NULL THEN 1 ELSE 0 END) UNSETTLEMENT_COUNT,
+			SUM(CASE WHEN DEDUCTION_STATE = 1 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) SETTLEMENT_MERCHANT_TOTAL_FEE,
+			SUM(CASE WHEN DEDUCTION_STATE IS NULL THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) UNSETTLEMENT_MERCHANT_TOTAL_FEE,
+			0 ETC_TOTAL_COUNT,SUM(CASE WHEN DEDUCTION_STATE &lt; 2 THEN 1 ELSE 0 END) BANK_TOTAL_COUNT,0
+			ETC_MERCHANT_TOTAL_FEE,SUM(CASE WHEN DEDUCTION_STATE &lt; 2 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+			BANK_MERCHANT_TOTAL_FEE,
+			0 BANK_REFUND_COUNT,0 BANK_MERCHANT_REFUND_TOTAL_FEE
+			FROM TB_ONLINE_EEXIT
+			<where>
+				<if test="entity.timeScope != null and entity.timeScope.length > 0">
+					AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+					STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+				</if>
+				<if test="entity.userMerchantParam != null">
+					<choose>
+						<when test="entity.userMerchantParam.nodeLevel == 1">
+							AND MERCHANT_GROUP_ID IN
+							<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+								#{item}
+							</foreach>
+						</when>
+						<when test="entity.userMerchantParam.nodeLevel == 2">
+							AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+						</when>
+						<otherwise>
+							AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+			GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}')
+			UNION ALL
+			SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(REFUND_COMPLETE_TIME,'${statisticsDimension}') TRADE_DAY,0 SETTLEMENT_COUNT,0 UNSETTLEMENT_COUNT,0 SETTLEMENT_MERCHANT_TOTAL_FEE,
+			0 UNSETTLEMENT_MERCHANT_TOTAL_FEE,0 ETC_TOTAL_COUNT,0 BANK_TOTAL_COUNT,0 ETC_MERCHANT_TOTAL_FEE,0 BANK_MERCHANT_TOTAL_FEE,SUM(CASE WHEN REFUND_STATE = 1 THEN 1 ELSE 0 END) BANK_REFUND_COUNT,
+			SUM(CASE WHEN REFUND_STATE = 1 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) BANK_MERCHANT_REFUND_TOTAL_FEE
+			FROM TB_ONLINE_REFUND_EEXIT
+			<where>
+				REFUND_COMPLETE_TIME IS NOT NULL
+				<if test="entity.timeScope != null and entity.timeScope.length > 0">
+					AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+					STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+				</if>
+				<if test="entity.userMerchantParam != null">
+					<choose>
+						<when test="entity.userMerchantParam.nodeLevel == 1">
+							AND MERCHANT_GROUP_ID IN
+							<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+								#{item}
+							</foreach>
+						</when>
+						<when test="entity.userMerchantParam.nodeLevel == 2">
+							AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+						</when>
+						<otherwise>
+							AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+			GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(REFUND_COMPLETE_TIME,'${statisticsDimension}')
+		) A
+		GROUP BY A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.TRADE_DAY
+		ORDER BY A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.TRADE_DAY
+		)b order by b.TRADE_DAY desc
+	</select>
+
+	<select id="findListByCondition" resultMap="BaseResultMap">
+		select * from
+		(SELECT A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.TRADE_DAY,SUM(A.SETTLEMENT_COUNT) SETTLEMENT_COUNT,SUM(A.UNSETTLEMENT_COUNT) UNSETTLEMENT_COUNT,
+		SUM(A.SETTLEMENT_MERCHANT_TOTAL_FEE) SETTLEMENT_MERCHANT_TOTAL_FEE,SUM(A.UNSETTLEMENT_MERCHANT_TOTAL_FEE) UNSETTLEMENT_MERCHANT_TOTAL_FEE,
+		SUM(A.ETC_TOTAL_COUNT) ETC_TOTAL_COUNT,SUM(A.BANK_TOTAL_COUNT) BANK_TOTAL_COUNT,SUM(A.ETC_MERCHANT_TOTAL_FEE) ETC_MERCHANT_TOTAL_FEE,
+		SUM(A.BANK_MERCHANT_TOTAL_FEE) BANK_MERCHANT_TOTAL_FEE,SUM(A.BANK_REFUND_COUNT) BANK_REFUND_COUNT,SUM(A.BANK_MERCHANT_REFUND_TOTAL_FEE) BANK_MERCHANT_REFUND_TOTAL_FEE,
+		SUM(A.ETC_TOTAL_COUNT + A.BANK_TOTAL_COUNT - A.BANK_REFUND_COUNT) TOTAL_COUNT,SUM(A.ETC_MERCHANT_TOTAL_FEE + A.BANK_MERCHANT_TOTAL_FEE - A.BANK_MERCHANT_REFUND_TOTAL_FEE) MERCHANT_TOTAL_FEE
+		FROM (
+		SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}') TRADE_DAY,SUM(CASE WHEN SETTLEMENT_CONFIRM_STATE = 2 THEN 1 ELSE 0 END)
+		SETTLEMENT_COUNT,SUM(CASE WHEN (SETTLEMENT_CONFIRM_STATE = 1) THEN 1 ELSE 0 END)
+		UNSETTLEMENT_COUNT,
+		SUM(CASE WHEN SETTLEMENT_CONFIRM_STATE = 2 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+		SETTLEMENT_MERCHANT_TOTAL_FEE,
+		SUM(CASE WHEN (SETTLEMENT_CONFIRM_STATE = 1) THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+		UNSETTLEMENT_MERCHANT_TOTAL_FEE,
+		SUM(CASE WHEN CLEAR_RESULT IN(0,1,2) THEN 1 ELSE 0 END) ETC_TOTAL_COUNT,0 BANK_TOTAL_COUNT,SUM(CASE WHEN
+		CLEAR_RESULT IN(0,1,2) THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) ETC_MERCHANT_TOTAL_FEE,0
+		BANK_MERCHANT_TOTAL_FEE,
+		0 BANK_REFUND_COUNT,0 BANK_MERCHANT_REFUND_TOTAL_FEE
+		FROM TB_ETC_TRANSACTION_EEXIT
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.userMerchantParam != null">
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						AND MERCHANT_GROUP_ID IN
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+							#{item}
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+					</when>
+					<otherwise>
+						AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}')
+		UNION ALL
+		SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}') TRADE_DAY,SUM(CASE WHEN DEDUCTION_STATE = 1 THEN 1 ELSE 0 END)
+		SETTLEMENT_COUNT,SUM(CASE WHEN DEDUCTION_STATE IS NULL THEN 1 ELSE 0 END) UNSETTLEMENT_COUNT,
+		SUM(CASE WHEN DEDUCTION_STATE = 1 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) SETTLEMENT_MERCHANT_TOTAL_FEE,
+		SUM(CASE WHEN DEDUCTION_STATE IS NULL THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) UNSETTLEMENT_MERCHANT_TOTAL_FEE,
+		0 ETC_TOTAL_COUNT,SUM(CASE WHEN DEDUCTION_STATE &lt; 2 THEN 1 ELSE 0 END) BANK_TOTAL_COUNT,0
+		ETC_MERCHANT_TOTAL_FEE,SUM(CASE WHEN DEDUCTION_STATE &lt; 2 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+		BANK_MERCHANT_TOTAL_FEE,
+		0 BANK_REFUND_COUNT,0 BANK_MERCHANT_REFUND_TOTAL_FEE
+		FROM TB_ONLINE_EEXIT
+		<where>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.userMerchantParam != null">
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						AND MERCHANT_GROUP_ID IN
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+							#{item}
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+					</when>
+					<otherwise>
+						AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}')
+		UNION ALL
+		SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(REFUND_COMPLETE_TIME,'${statisticsDimension}') TRADE_DAY,0 SETTLEMENT_COUNT,0 UNSETTLEMENT_COUNT,0 SETTLEMENT_MERCHANT_TOTAL_FEE,
+		0 UNSETTLEMENT_MERCHANT_TOTAL_FEE,0 ETC_TOTAL_COUNT,0 BANK_TOTAL_COUNT,0 ETC_MERCHANT_TOTAL_FEE,0 BANK_MERCHANT_TOTAL_FEE,SUM(CASE WHEN REFUND_STATE = 1 THEN 1 ELSE 0 END) BANK_REFUND_COUNT,
+		SUM(CASE WHEN REFUND_STATE = 1 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) BANK_MERCHANT_REFUND_TOTAL_FEE
+		FROM TB_ONLINE_REFUND_EEXIT
+		<where>
+			REFUND_COMPLETE_TIME IS NOT NULL
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.userMerchantParam != null">
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						AND MERCHANT_GROUP_ID IN
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+							#{item}
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+					</when>
+					<otherwise>
+						AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+		</where>
+		GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(REFUND_COMPLETE_TIME,'${statisticsDimension}')
+		) A
+		GROUP BY A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.TRADE_DAY
+		ORDER BY A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.TRADE_DAY
+		)b order by b.TRADE_DAY desc
+	</select>
+
+	<select id="getSum" resultMap="BaseResultMap">
+		SELECT SUM(A.SETTLEMENT_COUNT) SETTLEMENT_COUNT,SUM(A.UNSETTLEMENT_COUNT) UNSETTLEMENT_COUNT,
+		SUM(A.SETTLEMENT_MERCHANT_TOTAL_FEE) SETTLEMENT_MERCHANT_TOTAL_FEE,SUM(A.UNSETTLEMENT_MERCHANT_TOTAL_FEE) UNSETTLEMENT_MERCHANT_TOTAL_FEE,
+		SUM(A.ETC_TOTAL_COUNT) ETC_TOTAL_COUNT,SUM(A.BANK_TOTAL_COUNT) BANK_TOTAL_COUNT,SUM(A.ETC_MERCHANT_TOTAL_FEE) ETC_MERCHANT_TOTAL_FEE,
+		SUM(A.BANK_MERCHANT_TOTAL_FEE) BANK_MERCHANT_TOTAL_FEE,SUM(A.BANK_REFUND_COUNT) BANK_REFUND_COUNT,SUM(A.BANK_MERCHANT_REFUND_TOTAL_FEE) BANK_MERCHANT_REFUND_TOTAL_FEE,
+		SUM(A.ETC_TOTAL_COUNT + A.BANK_TOTAL_COUNT - A.BANK_REFUND_COUNT) TOTAL_COUNT,SUM(A.ETC_MERCHANT_TOTAL_FEE + A.BANK_MERCHANT_TOTAL_FEE - A.BANK_MERCHANT_REFUND_TOTAL_FEE) MERCHANT_TOTAL_FEE
+		FROM (
+			SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}') TRADE_DAY,SUM(CASE WHEN SETTLEMENT_CONFIRM_STATE = 2 THEN 1 ELSE 0 END)
+			SETTLEMENT_COUNT,SUM(CASE WHEN (SETTLEMENT_CONFIRM_STATE = 1) THEN 1 ELSE 0 END)
+			UNSETTLEMENT_COUNT,
+			SUM(CASE WHEN SETTLEMENT_CONFIRM_STATE = 2 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+			SETTLEMENT_MERCHANT_TOTAL_FEE,
+			SUM(CASE WHEN (SETTLEMENT_CONFIRM_STATE = 1) THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+			UNSETTLEMENT_MERCHANT_TOTAL_FEE,
+			SUM(CASE WHEN CLEAR_RESULT IN(0,1,2) THEN 1 ELSE 0 END) ETC_TOTAL_COUNT,0 BANK_TOTAL_COUNT,SUM(CASE WHEN
+			CLEAR_RESULT IN(0,1,2) THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) ETC_MERCHANT_TOTAL_FEE,0
+			BANK_MERCHANT_TOTAL_FEE,
+			0 BANK_REFUND_COUNT,0 BANK_MERCHANT_REFUND_TOTAL_FEE
+			FROM TB_ETC_TRANSACTION_EEXIT
+			<where>
+				<if test="entity.timeScope != null and entity.timeScope.length > 0">
+					AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+					STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+				</if>
+				<if test="entity.userMerchantParam != null">
+					<choose>
+						<when test="entity.userMerchantParam.nodeLevel == 1">
+							AND MERCHANT_GROUP_ID IN
+							<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+								#{item}
+							</foreach>
+						</when>
+						<when test="entity.userMerchantParam.nodeLevel == 2">
+							AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+						</when>
+						<otherwise>
+							AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+			GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}')
+			UNION ALL
+			SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}') TRADE_DAY,SUM(CASE WHEN DEDUCTION_STATE = 1 THEN 1 ELSE 0 END)
+			SETTLEMENT_COUNT,SUM(CASE WHEN DEDUCTION_STATE IS NULL THEN 1 ELSE 0 END) UNSETTLEMENT_COUNT,
+			SUM(CASE WHEN DEDUCTION_STATE = 1 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) SETTLEMENT_MERCHANT_TOTAL_FEE,
+			SUM(CASE WHEN DEDUCTION_STATE IS NULL THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) UNSETTLEMENT_MERCHANT_TOTAL_FEE,
+			0 ETC_TOTAL_COUNT,SUM(CASE WHEN DEDUCTION_STATE &lt; 2 THEN 1 ELSE 0 END) BANK_TOTAL_COUNT,0
+			ETC_MERCHANT_TOTAL_FEE,SUM(CASE WHEN DEDUCTION_STATE &lt; 2 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END)
+			BANK_MERCHANT_TOTAL_FEE,
+			0 BANK_REFUND_COUNT,0 BANK_MERCHANT_REFUND_TOTAL_FEE
+			FROM TB_ONLINE_EEXIT
+			<where>
+				<if test="entity.timeScope != null and entity.timeScope.length > 0">
+					AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+					STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+				</if>
+				<if test="entity.userMerchantParam != null">
+					<choose>
+						<when test="entity.userMerchantParam.nodeLevel == 1">
+							AND MERCHANT_GROUP_ID IN
+							<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+								#{item}
+							</foreach>
+						</when>
+						<when test="entity.userMerchantParam.nodeLevel == 2">
+							AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+						</when>
+						<otherwise>
+							AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+			GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(TRANS_TIME,'${statisticsDimension}')
+			UNION ALL
+			SELECT MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(REFUND_COMPLETE_TIME,'${statisticsDimension}') TRADE_DAY,0 SETTLEMENT_COUNT,0 UNSETTLEMENT_COUNT,0 SETTLEMENT_MERCHANT_TOTAL_FEE,
+			0 UNSETTLEMENT_MERCHANT_TOTAL_FEE,0 ETC_TOTAL_COUNT,0 BANK_TOTAL_COUNT,0 ETC_MERCHANT_TOTAL_FEE,0 BANK_MERCHANT_TOTAL_FEE,SUM(CASE WHEN REFUND_STATE = 1 THEN 1 ELSE 0 END) BANK_REFUND_COUNT,
+			SUM(CASE WHEN REFUND_STATE = 1 THEN MERCHANT_SETTLEMENT_FEE ELSE 0 END) BANK_MERCHANT_REFUND_TOTAL_FEE
+			FROM TB_ONLINE_REFUND_EEXIT
+			<where>
+				REFUND_COMPLETE_TIME IS NOT NULL
+				<if test="entity.timeScope != null and entity.timeScope.length > 0">
+					AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+					STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+				</if>
+				<if test="entity.userMerchantParam != null">
+					<choose>
+						<when test="entity.userMerchantParam.nodeLevel == 1">
+							AND MERCHANT_GROUP_ID IN
+							<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+								#{item}
+							</foreach>
+						</when>
+						<when test="entity.userMerchantParam.nodeLevel == 2">
+							AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+						</when>
+						<otherwise>
+							AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+						</otherwise>
+					</choose>
+				</if>
+			</where>
+			GROUP BY MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(REFUND_COMPLETE_TIME,'${statisticsDimension}')
+		) A
+	</select>
+</mapper>

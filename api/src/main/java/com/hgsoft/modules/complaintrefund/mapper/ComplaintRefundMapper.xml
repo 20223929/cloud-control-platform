@@ -1,0 +1,301 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.complaintrefund.mapper.ComplaintRefundMapper">
+
+    <resultMap type="com.hgsoft.modules.complaintrefund.entity.ComplaintRefund" id="BaseResultMap" autoMapping="true">
+        <id column="sys_id" property="sysId"/>
+        <result column="apply_time" property="applyTime" />
+        <result column="complaint_time" property="complaintTime" />
+        <result column="refund_apply_no" property="complaintId" />
+        <result column="refund_apply_channel" property="complaintChannel" />
+        <result column="complaint_type_desc" property="complaintTypeDesc" />
+        <result column="refund_appl_vehicle_plate" property="vehicleNumber" />
+        <result column="refund_appy_vehicle_color" property="vehicleColor"/>
+        <result column="service_type" property="serviceType" />
+        <result column="site_id" property="siteId" />
+        <result column="refund_way_type" property="refundType" />
+        <result column="refund_state" property="refundStatus" />
+        <result column="transaction_id" property="transactionId" />
+        <result column="merchant_real_fee" property="actualPayFee" />
+        <result column="refund_fee" property="refundFee" />
+        <result column="refund_apply_handle_result" property="refundApplyHandlerResult"/>
+    </resultMap>
+
+    <select id="findPage" resultMap="BaseResultMap">
+        SELECT C.* FROM (
+            SELECT A.SYS_ID,DATE_FORMAT(A.APPLY_TIME,'%Y-%m-%d %H:%i:%s') APPLY_TIME,DATE_FORMAT(A.COMPLAINT_TIME,'%Y-%m-%d %H:%i:%s') COMPLAINT_TIME,A.REFUND_APPLY_NO,A.REFUND_APPLY_CHANNEL,
+                   A.REFUND_WAY_TYPE,A.REFUND_APPLY_HANDLE_RESULT,A.REFUND_APPL_VEHICLE_PLATE,A.REFUND_APPY_VEHICLE_COLOR,A.SERVICE_TYPE,A.SITE_ID,A.REFUND_STATE,A.TRANSACTION_ID,A.MERCHANT_REAL_FEE,
+                   A.MERCHANT_REAL_FEE REFUND_FEE
+            FROM TB_REFUND_APPLY A
+            <where>
+                <if test="entity.timeScope != null and entity.timeScope.length > 0">
+                    AND A.COMPLAINT_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+                    STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+                </if>
+                <if test="entity.complaintId != null and entity.complaintId != ''">
+                    AND A.REFUND_APPLY_NO = #{entity.complaintId}
+                </if>
+                <if test="entity.transactionId != null and entity.transactionId != ''">
+                    AND A.TRANSACTION_ID = #{entity.transactionId}
+                </if>
+                <if test="entity.vehicleNumber != null and entity.vehicleNumber != ''">
+                    AND A.REFUND_APPL_VEHICLE_PLATE = #{entity.vehicleNumber}
+                </if>
+                <if test="entity.complaintChannel != null">
+                    AND A.REFUND_APPLY_CHANNEL = #{entity.complaintChannel}
+                </if>
+                <if test="entity.refundType != null">
+                    AND A.REFUND_WAY_TYPE = #{entity.refundType}
+                </if>
+                <if test="entity.refundApplyHandlerResult != null">
+                    AND A.REFUND_APPLY_HANDLE_RESULT = #{entity.refundApplyHandlerResult}
+                </if>
+                <if test="entity.refundStatus != null">
+                    AND A.REFUND_STATE = #{entity.refundStatus}
+                </if>
+            </where>
+        ) C
+        <where>
+            <if test="entity.userMerchantParam != null">
+                <choose>
+                    <when test="entity.userMerchantParam.nodeLevel == 1">
+                        <foreach collection="entity.userMerchantParam.searchIds" item="item" open=" (C.SITE_ID LIKE " close=" ) " separator=" OR ">
+                            CONCAT(#{item},'%')
+                        </foreach>
+                    </when>
+                    <when test="entity.userMerchantParam.nodeLevel == 2">
+                        AND C.SITE_ID LIKE CONCAT(#{entity.userMerchantParam.searchIds[0]},'%')
+                    </when>
+                    <otherwise>
+                        AND C.SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+        ORDER BY C.COMPLAINT_TIME DESC
+    </select>
+
+    <select id="findListByConditions" resultMap="BaseResultMap">
+        SELECT C.* FROM (
+        SELECT A.SYS_ID,DATE_FORMAT(A.APPLY_TIME,'%Y-%m-%d %H:%i:%s') APPLY_TIME,DATE_FORMAT(A.COMPLAINT_TIME,'%Y-%m-%d %H:%i:%s') COMPLAINT_TIME,A.REFUND_APPLY_NO,A.REFUND_APPLY_CHANNEL,
+               A.REFUND_WAY_TYPE,A.REFUND_APPLY_HANDLE_RESULT,A.REFUND_APPL_VEHICLE_PLATE,A.REFUND_APPY_VEHICLE_COLOR,A.SERVICE_TYPE,A.SITE_ID,A.REFUND_STATE,A.TRANSACTION_ID,A.MERCHANT_REAL_FEE,
+               A.MERCHANT_REAL_FEE REFUND_FEE
+        FROM TB_REFUND_APPLY A
+        <where>
+            <if test="entity.timeScope != null and entity.timeScope.length > 0">
+                AND A.COMPLAINT_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+                STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="entity.complaintId != null and entity.complaintId != ''">
+                AND A.REFUND_APPLY_NO = #{entity.complaintId}
+            </if>
+            <if test="entity.transactionId != null and entity.transactionId != ''">
+                AND A.TRANSACTION_ID = #{entity.transactionId}
+            </if>
+            <if test="entity.vehicleNumber != null and entity.vehicleNumber != ''">
+                AND A.REFUND_APPL_VEHICLE_PLATE = #{entity.vehicleNumber}
+            </if>
+            <if test="entity.complaintChannel != null">
+                AND A.REFUND_APPLY_CHANNEL = #{entity.complaintChannel}
+            </if>
+            <if test="entity.refundType != null">
+                AND A.REFUND_WAY_TYPE = #{entity.refundType}
+            </if>
+            <if test="entity.refundApplyHandlerResult != null">
+                AND A.REFUND_APPLY_HANDLE_RESULT = #{entity.refundApplyHandlerResult}
+            </if>
+            <if test="entity.refundStatus != null">
+                AND A.REFUND_STATE = #{entity.refundStatus}
+            </if>
+        </where>
+        ) C
+        <where>
+            <if test="entity.userMerchantParam != null">
+                <choose>
+                    <when test="entity.userMerchantParam.nodeLevel == 1">
+                        <foreach collection="entity.userMerchantParam.searchIds" item="item" open=" (C.SITE_ID LIKE " close=" ) " separator=" OR ">
+                            CONCAT(#{item},'%')
+                        </foreach>
+                    </when>
+                    <when test="entity.userMerchantParam.nodeLevel == 2">
+                        AND C.SITE_ID LIKE CONCAT(#{entity.userMerchantParam.searchIds[0]},'%')
+                    </when>
+                    <otherwise>
+                        AND C.SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+        ORDER BY C.COMPLAINT_TIME DESC
+    </select>
+
+    <select id="getSum" resultMap="BaseResultMap">
+        SELECT SUM(C.MERCHANT_REAL_FEE) MERCHANT_REAL_FEE,SUM(C.REFUND_FEE) REFUND_FEE FROM (
+        SELECT A.SYS_ID,A.SITE_ID,A.REFUND_APPLY_HANDLE_RESULT,A.REFUND_STATE,
+        A.MERCHANT_REAL_FEE,A.MERCHANT_REAL_FEE REFUND_FEE
+        FROM TB_REFUND_APPLY A
+        <where>
+            <if test="entity.timeScope != null and entity.timeScope.length > 0">
+                AND A.COMPLAINT_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+                STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+            </if>
+            <if test="entity.complaintId != null and entity.complaintId != ''">
+                AND A.REFUND_APPLY_NO = #{entity.complaintId}
+            </if>
+            <if test="entity.transactionId != null and entity.transactionId != ''">
+                AND A.TRANSACTION_ID = #{entity.transactionId}
+            </if>
+            <if test="entity.vehicleNumber != null and entity.vehicleNumber != ''">
+                AND A.REFUND_APPL_VEHICLE_PLATE = #{entity.vehicleNumber}
+            </if>
+            <if test="entity.complaintChannel != null">
+                AND A.REFUND_APPLY_CHANNEL = #{entity.complaintChannel}
+            </if>
+            <if test="entity.refundType != null">
+                AND A.REFUND_WAY_TYPE = #{entity.refundType}
+            </if>
+            <if test="entity.refundApplyHandlerResult != null">
+                AND A.REFUND_APPLY_HANDLE_RESULT = #{entity.refundApplyHandlerResult}
+            </if>
+            <if test="entity.refundStatus != null">
+                AND A.REFUND_STATE = #{entity.refundStatus}
+            </if>
+        </where>
+        ) C
+        <where>
+            <if test="entity.userMerchantParam != null">
+                <choose>
+                    <when test="entity.userMerchantParam.nodeLevel == 1">
+                        <foreach collection="entity.userMerchantParam.searchIds" item="item" open=" (C.SITE_ID LIKE " close=" ) " separator=" OR ">
+                            CONCAT(#{item},'%')
+                        </foreach>
+                    </when>
+                    <when test="entity.userMerchantParam.nodeLevel == 2">
+                        AND C.SITE_ID LIKE CONCAT(#{entity.userMerchantParam.searchIds[0]},'%')
+                    </when>
+                    <otherwise>
+                        AND C.SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+                    </otherwise>
+                </choose>
+            </if>
+        </where>
+    </select>
+
+    <select id="findRefundEexit" resultType="com.hgsoft.modules.complaintrefund.entity.OnlineRefundEexit">
+        SELECT E.* FROM (
+            SELECT A.TRANSACTION_ID,1
+            REFUND_TYPE,A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.EQUIPMENT_ID,DATE_FORMAT(A.TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADE_DAY,A.VEHICLE_PLATE,
+            A.VEHICLE_COLOR,A.SERVICE_TYPE,A.MERCHANT_REAL_FEE,A.MERCHANT_DISCOUNT_FEE,A.MERCHANT_PAY_FEE,DATE_FORMAT(A.EN_TIME,'%Y-%m-%d %H:%i:%s') EN_TIME_STR,
+            DATE_FORMAT(A.EX_TIME,'%Y-%m-%d %H:%i:%s') EX_TIME_STR,A.VEHICLE_TYPE,A.MERCHANT_SETTLEMENT_FEE,
+            A.CLEAR_SERVICE_FEE,A.CLEAR_SERVICE_FEE_RATE,A.BANK_SERVICE_FEE,A.BANK_SERVICE_FEE_RATE,A.BANK_DEDUCTION_ORDER_ID,DATE_FORMAT(A.DEDUCTION_TIME,'%Y-%m-%d %H:%i:%s') DEDUCTION_TIME_STR,DEDUCTION_ORDER_ID
+            FROM TB_ONLINE_EEXIT A
+            WHERE
+            VEHICLE_PLATE = #{entity.vehiclePlate}
+            AND VEHICLE_COLOR = #{entity.vehicleColor}
+            AND SITE_ID = #{entity.siteId}
+            AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+            STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+            <if test="provinceId != '23'">
+                UNION ALL
+                SELECT C.TRANSACTION_ID,2
+                REFUND_TYPE,C.MERCHANT_GROUP_ID,C.MERCHANT_ID,C.SITE_ID,C.EQUIPMENT_ID,DATE_FORMAT(C.TRANS_TIME,
+                '%Y-%m-%d %H:%i:%s') TRADE_DAY,C.VEHICLE_PLATE,
+                C.VEHICLE_COLOR,C.SERVICE_TYPE,C.MERCHANT_REAL_FEE,C.MERCHANT_DISCOUNT_FEE,C.MERCHANT_PAY_FEE,DATE_FORMAT(C.EN_TIME,'%Y-%m-%d %H:%i:%s') EN_TIME_STR,
+                DATE_FORMAT(C.EX_TIME,'%Y-%m-%d %H:%i:%s') EX_TIME_STR,C.VEHICLE_TYPE,C.MERCHANT_SETTLEMENT_FEE,
+                C.CLEAR_SERVICE_FEE,C.CLEAR_SERVICE_FEE_RATE,C.BANK_SERVICE_FEE,C.BANK_SERVICE_FEE_RATE, NULL
+                BANK_DEDUCTION_ORDER_ID,NULL DEDUCTION_TIME_STR,NULL
+                FROM TB_ETC_TRANSACTION_EEXIT C
+                WHERE
+                VEHICLE_PLATE = #{entity.vehiclePlate}
+                AND VEHICLE_COLOR = #{entity.vehicleColor}
+                AND SITE_ID = #{entity.siteId}
+                AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+            </if>
+        ) E
+        WHERE NOT EXISTS(SELECT 1 FROM TB_REFUND_APPLY F WHERE F.TRANSACTION_ID = E.TRANSACTION_ID AND (F.REFUND_STATE IN (0,1,2,4) OR F.REFUND_STATE IS NULL))
+        ORDER BY E.REFUND_TYPE,E.TRADE_DAY
+    </select>
+
+    <select id="findRefundEexitOne" resultType="com.hgsoft.modules.complaintrefund.entity.OnlineRefundEexit">
+        SELECT A.TRANSACTION_ID,1
+        REFUND_TYPE,A.MERCHANT_GROUP_ID,A.MERCHANT_ID,A.SITE_ID,A.EQUIPMENT_ID,DATE_FORMAT(A.TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADE_DAY,A.VEHICLE_PLATE,
+        A.VEHICLE_COLOR,A.SERVICE_TYPE,A.MERCHANT_REAL_FEE,A.MERCHANT_DISCOUNT_FEE,A.MERCHANT_PAY_FEE,DATE_FORMAT(A.EN_TIME,'%Y-%m-%d %H:%i:%s') EN_TIME_STR,
+        DATE_FORMAT(A.EX_TIME,'%Y-%m-%d %H:%i:%s') EX_TIME_STR,A.VEHICLE_TYPE,A.MERCHANT_SETTLEMENT_FEE,
+        A.CLEAR_SERVICE_FEE,A.CLEAR_SERVICE_FEE_RATE,A.BANK_SERVICE_FEE,A.BANK_SERVICE_FEE_RATE,A.BANK_DEDUCTION_ORDER_ID,DATE_FORMAT(A.DEDUCTION_TIME,'%Y-%m-%d %H:%i:%s') DEDUCTION_TIME_STR,DEDUCTION_ORDER_ID
+        FROM TB_ONLINE_EEXIT A
+        WHERE TRANSACTION_ID = #{transactionId}
+        UNION ALL
+        SELECT C.TRANSACTION_ID,2
+        REFUND_TYPE,C.MERCHANT_GROUP_ID,C.MERCHANT_ID,C.SITE_ID,C.EQUIPMENT_ID,DATE_FORMAT(C.TRANS_TIME,
+        '%Y-%m-%d %H:%i:%s') TRADE_DAY,C.VEHICLE_PLATE,
+        C.VEHICLE_COLOR,C.SERVICE_TYPE,C.MERCHANT_REAL_FEE,C.MERCHANT_DISCOUNT_FEE,C.MERCHANT_PAY_FEE,DATE_FORMAT(C.EN_TIME,'%Y-%m-%d %H:%i:%s') EN_TIME_STR,
+        DATE_FORMAT(C.EX_TIME,'%Y-%m-%d %H:%i:%s') EX_TIME_STR,C.VEHICLE_TYPE,C.MERCHANT_SETTLEMENT_FEE,
+        C.CLEAR_SERVICE_FEE,C.CLEAR_SERVICE_FEE_RATE,C.BANK_SERVICE_FEE,C.BANK_SERVICE_FEE_RATE, NULL
+        BANK_DEDUCTION_ORDER_ID,NULL DEDUCTION_TIME_STR,NULL
+        FROM TB_ETC_TRANSACTION_EEXIT C
+        WHERE TRANSACTION_ID = #{transactionId}
+    </select>
+
+    <select id="getApplyById" resultType="com.hgsoft.modules.complaintrefund.entity.RefundApply">
+        SELECT DATE_FORMAT(COMPLAINT_TIME,'%Y-%m-%d %H:%i:%s') APPLY_TIME_STR,REFUND_APPLY_CHANNEL,REFUND_APPLY_NO,REFUND_APPLY_NAME,REFUND_APPLY_CONTACT,REFUND_APPL_VEHICLE_PLATE,REFUND_APPY_VEHICLE_COLOR,
+                SITE_ID,TRANSACTION_ID,REFUND_APPLY_REASON,REFUND_APPLY_HANDLE_RESULT,REFUND_APPLY_HANDLE_MSG,SERVICE_TYPE,REFUND_WAY_TYPE,MERCHANT_REAL_FEE,MERCHANT_PAY_FEE,
+                MERCHANT_DISCOUNT_FEE,REFUND_STATE
+        FROM TB_REFUND_APPLY
+        WHERE SYS_ID = #{sysId}
+    </select>
+
+    <select id="getOnlineRefundEexitById" resultType="com.hgsoft.modules.complaintrefund.entity.OnlineRefundEexit">
+        SELECT * FROM TB_ONLINE_REFUND_EEXIT WHERE TRANSACTION_ID = #{transactionId} AND REFUND_STATE = #{refundResult}
+    </select>
+
+    <insert id="saveApply" useGeneratedKeys="true" keyProperty="sysId">
+        INSERT INTO TB_REFUND_APPLY(REFUND_APPLY_CHANNEL,REFUND_APPLY_NO,REFUND_APPLY_NAME,REFUND_APPLY_CONTACT,REFUND_APPL_VEHICLE_PLATE,REFUND_APPY_VEHICLE_COLOR,
+        SITE_ID,TRANSACTION_ID,REFUND_APPLY_REASON,REFUND_APPLY_HANDLE_RESULT,REFUND_APPLY_HANDLE_MSG,SERVICE_TYPE,APPLY_TIME,REFUND_WAY_TYPE,MERCHANT_REAL_FEE,MERCHANT_PAY_FEE,
+        MERCHANT_DISCOUNT_FEE,REFUND_STATE,COMPLAINT_TIME) VALUES (#{apply.refundApplyChannel},#{apply.refundApplyNo},#{apply.refundApplyName},#{apply.refundApplyContact},#{apply.refundApplVehiclePlate},
+        #{apply.refundAppyVehicleColor},#{apply.siteId},#{apply.transactionId},#{apply.refundApplyReason},#{apply.refundApplyHandleResult},#{apply.refundApplyHandleMsg},
+        #{apply.serviceType},STR_TO_DATE(#{apply.applyTimeStr},'%Y-%m-%d %H:%i:%s'),#{apply.refundWayType},#{apply.merchantRealFee},#{apply.merchantPayFee},#{apply.merchantDiscountFee},#{apply.refundState},now())
+    </insert>
+
+    <insert id="saveOnlineRefundEexit" useGeneratedKeys="true" keyProperty="sysId">
+        INSERT INTO TB_ONLINE_REFUND_EEXIT(REFUND_TRANS_ID,TB_REFUND_APPLY_SYS_ID,TRANSACTION_ID,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,EQUIPMENT_ID,EN_TIME,EX_TIME,TRANS_TIME,VEHICLE_PLATE,
+        VEHICLE_COLOR,VEHICLE_TYPE,MERCHANT_PAY_FEE,MERCHANT_REAL_FEE,MERCHANT_DISCOUNT_FEE,CREATE_TIME,SERVICE_TYPE,MERCHANT_SETTLEMENT_FEE,CLEAR_SERVICE_FEE_RATE,CLEAR_SERVICE_FEE,
+        BANK_SERVICE_FEE,BANK_SERVICE_FEE_RATE,UPDATE_TIME,BANK_DEDUCTION_ORDER_ID,REFUND_FEE,REFUND_STATE,REFUND_ORDER_ID,DEDUCTION_TIME,DEDUCTION_ORDER_ID) VALUES (#{refundEexit.refundTransId},
+        #{refundEexit.tbRefundApplySysId},#{refundEexit.transactionId},#{refundEexit.merchantGroupId},#{refundEexit.merchantId},#{refundEexit.siteId},#{refundEexit.equipmentId},
+        STR_TO_DATE(#{refundEexit.enTimeStr},'%Y-%m-%d %H:%i:%s'),STR_TO_DATE(#{refundEexit.exTimeStr},'%Y-%m-%d %H:%i:%s'),STR_TO_DATE(#{refundEexit.tradeDay},'%Y-%m-%d %H:%i:%s'),
+        #{refundEexit.vehiclePlate},#{refundEexit.vehicleColor},#{refundEexit.vehicleType},#{refundEexit.merchantPayFee},#{refundEexit.merchantRealFee},#{refundEexit.merchantDiscountFee},
+        #{refundEexit.createTime},#{refundEexit.serviceType},#{refundEexit.merchantSettlementFee},#{refundEexit.clearServiceFeeRate},#{refundEexit.clearServiceFee},
+        #{refundEexit.bankServiceFee},#{refundEexit.bankServiceFeeRate},#{refundEexit.updateTime},#{refundEexit.bankDeductionOrderId},#{refundEexit.refundFee},#{refundEexit.refundState},
+        #{refundEexit.refundOrderId},STR_TO_DATE(#{refundEexit.deductionTimeStr},'%Y-%m-%d %H:%i:%s'),#{refundEexit.deductionOrderId})
+    </insert>
+
+    <update id="updateApply">
+        UPDATE TB_REFUND_APPLY SET REFUND_APPLY_NAME = #{apply.refundApplyName},REFUND_APPLY_CONTACT = #{apply.refundApplyContact},REFUND_APPL_VEHICLE_PLATE = #{apply.refundApplVehiclePlate},REFUND_APPY_VEHICLE_COLOR = #{apply.refundAppyVehicleColor},
+        SITE_ID = #{apply.siteId},TRANSACTION_ID = #{apply.transactionId},REFUND_APPLY_REASON = #{apply.refundApplyReason},SERVICE_TYPE = #{apply.serviceType},MERCHANT_REAL_FEE = #{apply.merchantRealFee},
+        MERCHANT_PAY_FEE = #{apply.merchantPayFee},MERCHANT_DISCOUNT_FEE = #{apply.merchantDiscountFee},COMPLAINT_TIME = now()
+        WHERE SYS_ID = #{apply.sysId}
+    </update>
+
+    <delete id="deleteApply">
+        DELETE FROM TB_REFUND_APPLY WHERE SYS_ID = #{sysId}
+    </delete>
+
+    <update id="updateHandleResultAndComplaintTime">
+        UPDATE TB_REFUND_APPLY SET REFUND_APPLY_HANDLE_RESULT = #{result},COMPLAINT_TIME = now()
+        WHERE SYS_ID = #{sysId}
+    </update>
+
+    <update id="handleApply">
+        UPDATE TB_REFUND_APPLY SET REFUND_APPLY_HANDLE_RESULT = #{apply.refundApplyHandleResult},REFUND_APPLY_HANDLE_MSG = #{apply.refundApplyHandleMsg},REFUND_STATE = #{apply.refundState},refund_way_type = #{apply.refundWayType},apply_time = now()
+        WHERE SYS_ID = #{apply.sysId}
+    </update>
+
+    <update id="updateApplyRefundResult">
+        UPDATE TB_REFUND_APPLY SET REFUND_APPLY_HANDLE_RESULT = #{apply.refundApplyHandleResult},REFUND_STATE = #{apply.refundState}
+        WHERE SYS_ID = #{apply.sysId}
+    </update>
+
+    <update id="updateOnlineRefundResult">
+        UPDATE TB_ONLINE_REFUND_EEXIT SET REFUND_STATE = #{refundEexit.refundState},BANK_REFUND_MSG = #{refundEexit.bankRefundMsg},REFUND_COMPLETE_TIME = #{refundEexit.refundCompleteTime}
+         WHERE SYS_ID = #{refundEexit.sysId}
+    </update>
+</mapper>

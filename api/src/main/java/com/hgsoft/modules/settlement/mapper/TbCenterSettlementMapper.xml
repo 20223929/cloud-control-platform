@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.settlement.mapper.TbCenterSettlementMapper">
+
+	<resultMap type="com.hgsoft.modules.settlement.entity.TbCenterSettlement" id="BaseResultMap" autoMapping="true">
+		<id column="settlement_day" property="settlementDay" />
+		<id column="merchant_group_id" property="merchantGroupId" />
+		<id column="merchant_id" property="merchantId" />
+		<id column="site_id" property="siteId" />
+		<result column="service_type" property="serviceType" />
+    	<result column="real_total_amount" property="realTotalAmount" />
+    	<result column="clear_service_total_fee" property="clearServiceTotalFee" />
+    	<result column="confirm_state" property="confirmState" />
+    	<result column="confirm_man" property="confirmMan" />
+    	<result column="confirm_time" property="confirmTime" />
+	</resultMap>
+
+	<sql id="tbCenterSettlementColumns">
+		a.settlement_day AS "settlementDay",
+		a.service_type AS "serviceType",
+		a.merchant_group_id AS "merchantGroupId",
+		a.merchant_id AS "merchantId",
+		a.site_id AS "siteId",
+		a.real_total_amount AS "realTotalAmount",
+        a.pay_total_amount As "payTotalAmount",
+		a.clear_service_total_fee AS "clearServiceTotalFee",
+		a.confirm_state AS "confirmState",
+		a.confirm_man AS "confirmMan",
+		a.confirm_time AS "confirmTime"
+	</sql>
+
+	<sql id="tbCenterSettlementJoins">
+	</sql>
+
+	<sql id="findSql">
+		SELECT
+		<include refid="tbCenterSettlementColumns" />
+		FROM (
+		SELECT
+		c.settlement_day,
+		c.service_type,
+		c.merchant_group_id,
+		c.merchant_id,
+		c.site_id,
+		SUM(c.merchant_pay_fee) AS pay_total_amount,
+		SUM(c.merchant_real_fee) AS real_total_amount,
+		sum(c.clear_service_fee) AS clear_service_total_fee,
+		CASE
+		WHEN SUM(c.confirm_count) != COUNT(1) THEN 1
+		ELSE 2
+		END AS confirm_state,
+		MAX(settlement_confirm_man) AS confirm_man,
+		MAX(c.settlement_confirm_time) AS confirm_time
+		FROM
+		(SELECT
+		clear_date AS settlement_day,
+		service_type,
+		merchant_group_id,
+		merchant_id,
+		site_id,
+		merchant_pay_fee,
+		merchant_real_fee,
+		clear_service_fee,
+		CASE
+		WHEN settlement_confirm_state = 2 THEN 1
+		ELSE 0
+		END AS confirm_count,
+		settlement_confirm_man,
+		settlement_confirm_time
+		FROM
+		tb_etc_transaction_eexit
+		<where>
+			clear_result &lt; 2 and clear_date is not null
+			<if test="entity.beginClearDate != null and entity.endClearDate != null ">
+				AND clear_date BETWEEN #{entity.beginClearDate} AND #{entity.endClearDate}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND merchant_id = #{entity.merchantId}
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND site_id = #{entity.siteId}
+			</if>
+			<if test="entity.confirmState != null">
+				AND settlement_confirm_state = #{entity.confirmState}
+			</if>
+			<if test="entity.serviceType !=null">
+				and service_type = #{entity.serviceType}
+			</if>
+		</where>
+		) c
+		GROUP BY c.settlement_day , c.service_type , c.merchant_group_id , c.merchant_id , c.site_id order by c.settlement_day desc
+		) a
+	</sql>
+
+
+	<select id="findPage" resultType="com.hgsoft.modules.settlement.entity.TbCenterSettlement" parameterType="com.hgsoft.modules.settlement.entity.SettlementSearchVo">
+		<include refid="findSql"/>
+	</select>
+
+
+	<select id="findAllList" resultType="com.hgsoft.modules.settlement.entity.TbCenterSettlement" >
+		<include refid="findSql"/>
+	</select>
+
+	<select id="getSum" resultType="com.hgsoft.modules.settlement.entity.TbCenterSettlement" parameterType="com.hgsoft.modules.settlement.entity.SettlementSearchVo">
+		select sum(c.realTotalAmount) as realTotalAmount,
+		sum(c.payTotalAmount) as payTotalAmount,
+		       sum(c.clearServiceTotalFee) as clearServiceTotalFee  from (<include refid="findSql"/>) c
+	</select>
+
+	<update id="updateSettlementConfirm" parameterType="com.hgsoft.modules.settlement.entity.TbCenterSettlement">
+		update tb_etc_transaction_eexit
+		set settlement_confirm_man = #{entity.confirmMan},
+			settlement_confirm_state = 2,
+			settlement_confirm_time = now()
+		where
+			clear_date = #{entity.settlementDay}
+			AND merchant_id = #{entity.merchantId}
+			AND merchant_group_id = #{entity.merchantGroupId}
+			AND site_id = #{entity.siteId}
+			AND clear_result &lt; 2
+	</update>
+
+	<select id="findEexitPage" resultType="com.hgsoft.modules.bankbillcheck.entity.TbEtcTransactionEexitExportExeclVo">
+		select
+		c.*
+		FROM
+		tb_etc_transaction_eexit c
+		<where>
+			<if test="entity.clearDate !=null and entity.clearDate!='' ">and clear_Date = #{entity.clearDate}</if>
+			<if test="entity.transactionId !=null and entity.transactionId!='' ">and transaction_id = #{entity.transactionId}</if>
+			<if test="entity.etcCardId !=null and entity.etcCardId!='' ">and etc_card_id = #{entity.etcCardId}</if>
+			<if test="entity.vehicleColor !=null and entity.vehicleColor!='' ">and vehicle_color = #{entity.vehicleColor}</if>
+			<if test="entity.vehiclePlate!=null and entity.vehiclePlate!='' ">and vehicle_plate = #{entity.vehiclePlate}</if>
+		</where>
+	</select>
+
+	<select id="findEexitAll" resultType="com.hgsoft.modules.bankbillcheck.entity.TbEtcTransactionEexitExportExeclVo">
+		select
+		c.*
+		FROM
+		tb_etc_transaction_eexit c
+		<where>
+			<if test="entity.clearDate !=null and entity.clearDate!='' ">and clear_Date = #{entity.clearDate}</if>
+			<if test="entity.transactionId !=null and entity.transactionId!='' ">and transaction_id = #{entity.transactionId}</if>
+			<if test="entity.etcCardId !=null and entity.etcCardId!='' ">and etc_card_id = #{entity.etcCardId}</if>
+			<if test="entity.vehicleColor !=null and entity.vehicleColor!='' ">and vehicle_color = #{entity.vehicleColor}</if>
+			<if test="entity.vehiclePlate!=null and entity.vehiclePlate!='' ">and vehicle_plate = #{entity.vehiclePlate}</if>
+		</where>
+	</select>
+    <select id="countEexit" resultType="java.lang.Long">
+		select count(1) from tb_etc_transaction_eexit c
+		<where>
+			<if test="entity.clearDate !=null and entity.clearDate!='' ">and clear_Date = #{entity.clearDate}</if>
+			<if test="entity.transactionId !=null and entity.transactionId!='' ">and transaction_id = #{entity.transactionId}</if>
+			<if test="entity.etcCardId !=null and entity.etcCardId!='' ">and etc_card_id = #{entity.etcCardId}</if>
+			<if test="entity.vehicleColor !=null and entity.vehicleColor!='' ">and vehicle_color = #{entity.vehicleColor}</if>
+			<if test="entity.vehiclePlate!=null and entity.vehiclePlate!='' ">and vehicle_plate = #{entity.vehiclePlate}</if>
+		</where>
+	</select>
+
+</mapper>

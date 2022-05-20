@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,minimum-scale=1.0,user-scalable=no">
+    <title>京津塘高速大屏</title>
+    <link rel="stylesheet" href="largescreen/css/style.css">
+</head>
+
+<body>
+    <div id="datetime"></div>
+    <div class="topLogo">
+        <img src="largescreen/img/logo.png" alt="">
+<!--        <div class="rightName">
+            <img src="largescreen/img/headImg.png" alt="">
+            <div class="select">
+                <select name="" id="">
+                    <option value=""></option>
+                </select> ETC运营部
+            </div>
+        </div>-->
+    </div>
+    <main>
+        <div class="left">
+            <h2 class="section">经营概览</h2>
+            <section style="flex:0.6">
+                <h3 class="flex justify-between align-center">
+                    过车交易统计
+                    <div>
+                        <!-- <div class="select">
+                            <select name="" id="">
+                                <option value=""></option>
+                            </select> 收费站
+                        </div> -->
+                        <div class="select">
+                            <select name="" id="selectTimeType">
+                                <option value="1">今日</option>
+                                <option value="2">今月</option>
+                                <option value="3">今年</option>
+                            </select> <span id="showType">今日</span>
+                        </div>
+                    </div>
+                </h3>
+                <div class="flexItem flex">
+                    <div class="flexItem flex flex-column justify-center align-center">
+                        <div class="hex">全网车流量</div>
+                        <p class="unit text-big" id="plateNum1" data-unit="辆">0</p>
+                        <div class="base">
+                            <div class="flex justify-between">
+                                <div class="text-nowrap">加油站 <span class="text-green" data-unit="%" id="plateNum2">0</span></div>
+                                <div class="text-nowrap">停车场 <span class="text-green" data-unit="%" id="plateNum3">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flexItem flex flex-column justify-center align-center">
+                        <div class="hex">全网交易额</div>
+                        <p class="unit text-big" id="plateNum4" data-unit="元">0</p>
+                        <div class="base">
+                            <div class="flex justify-between">
+                                <div class="text-nowrap">加油站 <span class="text-green" data-unit="%" id="plateNum5">0</span></div>
+                                <div class="text-nowrap">停车场 <span class="text-green" data-unit="%" id="plateNum6">0</span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="center">
+                <h3 class="flex justify-between align-center">
+                    交易流量金额趋势
+                </h3>
+                <div class="flexItem">
+                    <div class="chart" id="vfSuccessRateTrendTask" data-chart="lineBar"></div>
+                </div>
+            </section>
+        </div>
+        <div class="middle">
+            <div class="flex justify-between top">
+                <div class="bigBtns">
+                    <div class="active">资产分布图</div>
+                </div>
+                <div class="flexItem miniBtns">
+                    <div data-id='2' class="active">停车场</div>
+                    <div data-id='3'>加油站</div>
+                </div>
+            </div>
+            <div id="road">
+            </div>
+        </div>
+        <div class="right">
+            <h2 class="section">接入场景分布</h2>
+            <section style="flex:0.6">
+                <h3 class="flex justify-between align-center">
+                    异常报警
+                </h3>
+                <div class="warnBoxNum">
+                    <div>
+                        <div>严重报警：<span class="errorNum">3</span>
+                        </div>
+                    </div>
+                    <div>
+                        <div>一般报警：<span class="normalNum">5</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="blackBox">
+                    <div class="blackBoxTitle">黑名单版本号</div>
+                    <div class="blackItem">全量ETC卡黑名单：<span id="backlist1">暂无数据</span></div>
+                    <div class="blackItem">增量ETC卡黑名单：：<span id="backlist2">暂无数据</span></div>
+                    <div class="blackItem">全量OBU黑名单：：<span id="backlist3">暂无数据</span></div>
+                    <div class="blackItem">增量OBU黑名单：：<span id="backlist4">暂无数据</span></div>
+                </div>
+            </section>
+            <section class="center">
+                <h3 class="flex justify-between align-center">
+                    今日交易额排行榜
+                </h3>
+                <div class="norBox">
+                    <table border="1">
+                        <thead>
+                            <tr>
+                                <td colspan="3" style="height: 3.1rem;">停车场</td>
+                            </tr>
+                        </thead>
+                        <tbody id="parking_lot_rank">
+                            <tr>
+                                <td colspan="3">暂无数据</td>
+<!--                                <td>加油站1</td>-->
+<!--                                <td>0</td>-->
+                            </tr>
+<!--                            <tr>-->
+<!--                                <td>2</td>-->
+<!--                                <td>加油站1</td>-->
+<!--                                <td>0</td>-->
+<!--                            </tr>-->
+<!--                            <tr>-->
+<!--                                <td>3</td>-->
+<!--                                <td>加油站1</td>-->
+<!--                                <td>0</td>-->
+<!--                            </tr>-->
+<!--                            <tr>-->
+<!--                                <td>4</td>-->
+<!--                                <td>加油站1</td>-->
+<!--                                <td>0</td>-->
+<!--                            </tr>-->
+<!--                            <tr>-->
+<!--                                <td>5</td>-->
+<!--                                <td>加油站1</td>-->
+<!--                                <td>0</td>-->
+<!--                            </tr>-->
+                        </tbody>
+                    </table>
+                    <table border="1" id="norTtable">
+                        <thead>
+                            <tr>
+                                <td colspan="3" style="height: 3.1rem;color: #00f4fb;">加油站</td>
+                            </tr>
+                        </thead>
+                        <tbody id="gas_station_rank">
+                            <tr>
+                                <td colspan="3">暂无数据</td>
+<!--                                <td>加油站1</td>-->
+<!--                                <td>0</td>-->
+                            </tr>
+<!--                            <tr>-->
+<!--                                <td>2</td>-->
+<!--                                <td>加油站1</td>-->
+<!--                                <td>0</td>-->
+<!--                            </tr>-->
+<!--                            <tr>-->
+<!--                                <td>3</td>-->
+<!--                                <td>加油站1</td>-->
+<!--                                <td>0</td>-->
+<!--                            </tr>-->
+<!--                            <tr>-->
+<!--                                <td>4</td>-->
+<!--                                <td>加油站1</td>-->
+<!--                                <td>0</td>-->
+<!--                            </tr>-->
+<!--                            <tr>-->
+<!--                                <td>5</td>-->
+<!--                                <td>加油站1</td>-->
+<!--                                <td>0</td>-->
+<!--                            </tr>-->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+    </main>
+    <script src="largescreen/js/echarts.min.js"></script>
+    <script src="https://cache.amap.com/lbs/static/es5.min.js"></script>
+    <script src="https://webapi.amap.com/maps?v=1.4.15&key=cf566503e687f11917c585b506084d74"></script>
+     <script src="https://a.amap.com/jsapi_demos/static/resource/heatmapData.js"></script>
+    <script src="largescreen/js/jquery.js"></script>
+    <script src="largescreen/js/sockjs.js"></script>
+    <script src="largescreen/js/stomp.js"></script>
+    <script src="largescreen/js/chartOption.js"></script>
+    <script src="largescreen/js/main.js"></script>
+    <script>
+      console.log("----------");
+        var time_dimension = 1;
+        var service_type = 2;
+        $("#selectTimeType").on('change', function() {
+            time_dimension = $(this).val();
+            $("#showType").html($("#selectTimeType option:selected").text());
+            init();
+        })
+        init();
+
+        var map;
+        var map = new AMap.Map('road', {
+            //mapStyle: "amap://styles/d3cfe4c584898a04325bfcf2e4745093",
+            mapStyle: "amap://styles/normal",
+            center: [110.763637, 25.12285],
+            zoom: 13,
+            resizeEnable: true,
+        });
+        if (!isSupportCanvas()) {
+            alert('热力图仅对支持canvas的浏览器适用,您所使用的浏览器不能使用热力图功能,请换个浏览器试试~')
+        }
+        // setInterval(function() {
+        //     console.log(1);
+        // }, 3000)
+        // setInterval(function() {
+        //         console.log(2);
+        //     }, 6000)
+        // setInterval(function() {
+        //     console.log(3);
+        // }, 5000)
+        // setInterval(function() {
+        //     console.log(4);
+        // }, 10000)
+        // setInterval(function() {
+        //     console.log(5);
+        // }, 20000)
+        var heatmap;
+        var heatmapData = [{
+            "lng": 110.909104,
+            "lat": 25.788621,
+            "count": 100
+        }, {
+            "lng": 110.905413,
+            "lat": 25.783462,
+            "count": 100
+        }, {
+            "lng": 110.900091,
+            "lat": 25.770709,
+            "count": 60
+        }, {
+            "lng": 110.897388,
+            "lat": 25.765492,
+            "count": 40
+        }];
+        map.plugin(["AMap.Heatmap"], function() {
+            //初始化heatmap对象
+            heatmap = new AMap.Heatmap(map, {
+                radius: 20, //给定半径
+                opacity: [0, 0.8],
+                gradient: {
+                    0.5: 'blue',
+                    0.65: 'rgb(117,211,248)',
+                    0.7: 'rgb(0, 255, 0)',
+                    0.9: '#ffea00',
+                    1.0: 'red'
+                }
+            });
+            //设置数据集：该数据为北京部分“公园”数据
+            heatmap.setDataSet({
+                data: heatmapData,
+                max: 100
+            });
+        });
+
+        //判断浏览区是否支持canvas
+        function isSupportCanvas() {
+            var elem = document.createElement('canvas');
+            return !!(elem.getContext && elem.getContext('2d'));
+        }
+        var selectId = 1;
+        var markers = [];
+
+        markers.forEach(function(marker) {
+            new AMap.Marker({
+                map: map,
+                // icon: marker.icon,
+                content: getContent(marker),
+                position: [marker.position[0], marker.position[1]],
+                offset: new AMap.Pixel(-13, -30)
+            });
+        });
+
+        map.add(markers);
+        map.setFitView();
+
+        // 点标记显示内容，HTML要素字符串
+        function getContent(data) {
+            var markerContent = '' +
+                '<div class="custom-content-marker" data-type="' + data.service_type + '" data-id="' + data.npointId + '">' +
+                ' <img src="' + (data.service_type == 3 ? 'largescreen/img/jiayouzhan_icon.png' : 'largescreen/img/tingchechang_icon.png') + '">' +
+                '</div>' +
+                ' <div class="mapText">' + data.name + '</div>';
+            return markerContent;
+        }
+
+        $(".miniBtns div").on('click', function() {
+            var idx = $(this).data('id');
+            service_type = idx;
+            $(".miniBtns div").removeClass("active");
+            $(this).addClass("active");
+            // $(".custom-content-marker").hide();
+            // $(".custom-content-marker[data-type=" + idx + "]").show();
+            init();
+        })
+    </script>
+</body>
+
+</html>

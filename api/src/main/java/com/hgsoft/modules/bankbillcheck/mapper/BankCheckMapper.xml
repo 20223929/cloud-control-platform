@@ -1,0 +1,615 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.bankbillcheck.mapper.BankCheckMapper">
+	<resultMap id="bankCheckMap" type="com.hgsoft.modules.bankbillcheck.entity.BankCheck">
+		<result column="TRADEDAY" jdbcType="VARCHAR" property="tradeDay"/>
+		<result column="MERCHANTGROUPID" jdbcType="VARCHAR" property="merchantGroupId"/>
+		<result column="MERCHANTID" jdbcType="VARCHAR" property="merchantId"/>
+		<result column="SITEID" jdbcType="VARCHAR" property="siteId"/>
+		<result column="TOTALCOUNT" jdbcType="DECIMAL" property="totalCount"/>
+		<result column="TOTALAMOUNT" jdbcType="DECIMAL" property="totalAmount"/>
+		<result column="TOTALCHECKCOUNT" jdbcType="DECIMAL" property="totalCheckCount"/>
+		<result column="TOTALCHECKAMOUNT" jdbcType="DECIMAL" property="totalCheckAmount"/>
+		<result column="DIFFERCOUNT" jdbcType="DECIMAL" property="differCount"/>
+		<result column="DIFFERAMOUNT" jdbcType="DECIMAL" property="differAmount"/>
+		<result column="CHECKMODE" jdbcType="DECIMAL" property="checkMode"/>
+		<result column="CHECKSTATUS" jdbcType="DECIMAL" property="checkStatus"/>
+		<result column="TOTALCONFIRMCOUNT" jdbcType="DECIMAL" property="totalConfirmCount"/>
+		<result column="TOTALCONFIRMAMOUNT" jdbcType="DECIMAL" property="totalConfirmAmount"/>
+		<result column="CHECKTIME" jdbcType="VARCHAR" property="checkTime"/>
+		<result column="remark" jdbcType="VARCHAR" property="remark"/>
+	</resultMap>
+
+	<select id="findBankCheckPage" resultMap="bankCheckMap">
+		select * from
+		(SELECT * FROM (
+			SELECT
+				C.TRADEDAY,
+				C.MERCHANTGROUPID,
+				C.MERCHANTID,
+				C.SITEID,
+				CASE
+				WHEN C.TOTALCOUNT = 0 THEN
+				NULL
+				ELSE
+				C.TOTALCOUNT
+				END TOTALCOUNT,
+				CASE
+				WHEN C.TOTALAMOUNT = 0 THEN
+				NULL
+				ELSE
+				C.TOTALAMOUNT
+				END TOTALAMOUNT,
+				CASE
+				WHEN C.TOTALCHECKCOUNT = 0 THEN
+				NULL
+				ELSE
+				C.TOTALCHECKCOUNT
+				END TOTALCHECKCOUNT,
+				CASE
+				WHEN C.TOTALCHECKAMOUNT = 0 THEN
+				NULL
+				ELSE
+				C.TOTALCHECKAMOUNT
+				END TOTALCHECKAMOUNT,
+				C.TOTALCHECKCOUNT - C.TOTALCOUNT DIFFERCOUNT,
+				C.TOTALCHECKAMOUNT - C.TOTALAMOUNT DIFFERAMOUNT,
+				B.TOTAL_COUNT TOTALCONFIRMCOUNT,
+				B.TOTAL_AMOUNT TOTALCONFIRMAMOUNT,
+				DATE_FORMAT(
+				B.CONFIRM_TIME,
+				'%Y-%m-%d %H:%i:%s'
+				) CHECKTIME,
+				B.REMARK,
+				CASE
+				WHEN B.CONFIRM_STATE IS NOT NULL THEN
+				B.CONFIRM_STATE
+				WHEN C.TOTALCOUNT = C.TOTALCHECKCOUNT
+				AND C.TOTALAMOUNT = C.TOTALCHECKAMOUNT THEN
+				2
+				ELSE
+				1
+				END CHECKSTATUS,
+				CASE WHEN C.TOTALCHECKCOUNT > 0 THEN
+				1
+				ELSE
+				2
+				END CHECKMODE
+			FROM
+			(
+				SELECT
+					DATE_FORMAT(A.TRANS_TIME, '%Y-%m-%d') TRADEDAY,
+					A.MERCHANT_GROUP_ID MERCHANTGROUPID,
+					A.MERCHANT_ID MERCHANTID,
+					A.SITE_ID SITEID,
+					COUNT(A.SYS_ID) TOTALCOUNT,
+					SUM(A.DEDUCTION_FEE) TOTALAMOUNT,
+					SUM(
+					CASE
+					WHEN A.BILL_RESULT IS NOT NULL THEN
+					1
+					ELSE
+					0
+					END
+					) TOTALCHECKCOUNT,
+					SUM(
+					CASE
+					WHEN A.BILL_RESULT IS NOT NULL THEN
+					A.DEDUCTION_FEE
+					ELSE
+					0
+					END
+					) TOTALCHECKAMOUNT
+				FROM
+				TB_ONLINE_EEXIT A
+				<where>
+					<if test="entity.userMerchantParam != null">
+						<choose>
+							<when test="entity.userMerchantParam.nodeLevel == 1">
+								AND A.MERCHANT_GROUP_ID IN
+								<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")"
+										 separator=",">
+									#{item}
+								</foreach>
+							</when>
+							<when test="entity.userMerchantParam.nodeLevel == 2">
+								AND A.MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+							</when>
+							<otherwise>
+								AND A.SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+							</otherwise>
+						</choose>
+					</if>
+					<if test="entity.timeScope != null and entity.timeScope.length > 0">
+						AND A.TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+						STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+					</if>
+					<if test="entity.serviceType != null">
+						AND A.SERVICE_TYPE = #{entity.serviceType}
+					</if>
+				</where>
+				GROUP BY
+				DATE_FORMAT(A.TRANS_TIME, '%Y-%m-%d'),
+				A.MERCHANT_GROUP_ID,
+				A.MERCHANT_ID,
+				A.SITE_ID
+			) C
+			LEFT JOIN TB_BANK_BILL_CHECK_EXP_PLATFORM_ETC B ON C.TRADEDAY = B.TRANS_DATE
+			AND C.MERCHANTGROUPID = B.MERCHANT_GROUP_ID
+			AND C.MERCHANTID = B.MERCHANT_ID
+			AND C.SITEID = B.SITE_ID
+			ORDER BY C.TRADEDAY DESC
+		) D
+		<where>
+			<if test="entity.checkStatus != null">
+				AND D.CHECKSTATUS = #{entity.checkStatus}
+			</if>
+		</where>) a
+	</select>
+
+	<select id="exportDetailList" resultType="com.hgsoft.modules.bankbillcheck.entity.BankCheckDetailExport">
+		<choose>
+			<when test="entity.checkStatus == null">
+				SELECT E.TRANSACTION_ID,E.SERVICE_TYPE,E.MERCHANT_GROUP_ID,E.MERCHANT_ID,E.SITE_ID,E.EQUIPMENT_ID,E.VEHICLE_PLATE VEHICLE_NUMBER,E.VEHICLE_COLOR,E.VEHICLE_TYPE,DATE_FORMAT(E.EN_TIME,'%Y-%m-%d %H:%i:%s') EN_TIME,
+				DATE_FORMAT(E.EX_TIME,'%Y-%m-%d %H:%i:%s') EX_TIME,DATE_FORMAT(E.TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRANS_TIME,FORMAT(E.MERCHANT_PAY_FEE/100,2) MERCHANT_PAY_FEE,FORMAT(E.MERCHANT_REAL_FEE/100,2) MERCHANT_REAL_FEE,
+				FORMAT(E.MERCHANT_DISCOUNT_FEE/100,2) MERCHANT_DISCOUNT_FEE,FORMAT(E.MERCHANT_SETTLEMENT_FEE/100,2) MERCHANT_SETTLEMENT_FEE,E.BANK_DEDUCTION_ORDER_ID
+				FROM TB_ONLINE_EEXIT E
+				<where>
+					<if test="entity.userMerchantParam != null">
+						<choose>
+							<when test="entity.userMerchantParam.nodeLevel == 1">
+								AND E.MERCHANT_GROUP_ID IN
+								<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")"
+										 separator=",">
+									#{item}
+								</foreach>
+							</when>
+							<when test="entity.userMerchantParam.nodeLevel == 2">
+								AND E.MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+							</when>
+							<otherwise>
+								AND E.SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+							</otherwise>
+						</choose>
+					</if>
+					<if test="entity.timeScope != null and entity.timeScope.length > 0">
+						AND E.TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+						STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+					</if>
+					<if test="entity.serviceType != null">
+						AND E.SERVICE_TYPE = #{entity.serviceType}
+					</if>
+				</where>
+			</when>
+			<otherwise>
+				SELECT E.TRANSACTION_ID,E.SERVICE_TYPE,E.MERCHANT_GROUP_ID,E.MERCHANT_ID,E.SITE_ID,E.EQUIPMENT_ID,E.VEHICLE_PLATE VEHICLE_NUMBER,E.VEHICLE_COLOR,E.VEHICLE_TYPE,DATE_FORMAT(E.EN_TIME,'%Y-%m-%d %H:%i:%s') EN_TIME,
+				DATE_FORMAT(E.EX_TIME,'%Y-%m-%d %H:%i:%s') EX_TIME,DATE_FORMAT(E.TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRANS_TIME,FORMAT(E.MERCHANT_PAY_FEE/100,2) MERCHANT_PAY_FEE,FORMAT(E.MERCHANT_REAL_FEE/100,2) MERCHANT_REAL_FEE,
+				FORMAT(E.MERCHANT_DISCOUNT_FEE/100,2) MERCHANT_DISCOUNT_FEE,FORMAT(E.MERCHANT_SETTLEMENT_FEE/100,2) MERCHANT_SETTLEMENT_FEE,E.BANK_DEDUCTION_ORDER_ID
+				FROM TB_ONLINE_EEXIT E
+				WHERE EXISTS(
+				SELECT 1
+				FROM (
+				SELECT D.TRADEDAY,D.SITEID
+				FROM (
+				SELECT
+				C.TRADEDAY,
+				C.SITEID,
+				CASE
+				WHEN B.CONFIRM_STATE IS NOT NULL THEN
+				B.CONFIRM_STATE
+				WHEN C.TOTALCOUNT = C.TOTALCHECKCOUNT
+				AND C.TOTALAMOUNT = C.TOTALCHECKAMOUNT THEN
+				2
+				ELSE
+				1
+				END CHECKSTATUS
+				FROM
+				(
+				SELECT
+				DATE_FORMAT(A.TRANS_TIME, '%Y-%m-%d') TRADEDAY,
+				A.SITE_ID SITEID,
+				COUNT(A.SYS_ID) TOTALCOUNT,
+				SUM(A.DEDUCTION_FEE) TOTALAMOUNT,
+				SUM(
+				CASE
+				WHEN A.BILL_RESULT IS NOT NULL THEN
+				1
+				ELSE
+				0
+				END
+				) TOTALCHECKCOUNT,
+				SUM(
+				CASE
+				WHEN A.BILL_RESULT IS NOT NULL THEN
+				A.DEDUCTION_FEE
+				ELSE
+				0
+				END
+				) TOTALCHECKAMOUNT
+				FROM
+				TB_ONLINE_EEXIT A
+				<where>
+					<if test="entity.userMerchantParam != null">
+						<choose>
+							<when test="entity.userMerchantParam.nodeLevel == 1">
+								AND A.MERCHANT_GROUP_ID IN
+								<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")"
+										 separator=",">
+									#{item}
+								</foreach>
+							</when>
+							<when test="entity.userMerchantParam.nodeLevel == 2">
+								AND A.MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+							</when>
+							<otherwise>
+								AND A.SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+							</otherwise>
+						</choose>
+					</if>
+					<if test="entity.timeScope != null and entity.timeScope.length > 0">
+						AND A.TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+						STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+					</if>
+					<if test="entity.serviceType != null">
+						AND A.SERVICE_TYPE = #{entity.serviceType}
+					</if>
+				</where>
+				GROUP BY
+				DATE_FORMAT(A.TRANS_TIME, '%Y-%m-%d'),
+				A.SITE_ID
+				) C
+				LEFT JOIN TB_BANK_BILL_CHECK_EXP_PLATFORM_ETC B ON C.TRADEDAY = B.TRANS_DATE
+				AND C.SITEID = B.SITE_ID
+				) D
+				<where>
+					<if test="entity.checkStatus != null">
+						AND D.CHECKSTATUS = #{entity.checkStatus}
+					</if>
+				</where>
+				) F WHERE F.TRADEDAY = DATE_FORMAT(E.TRANS_TIME, '%Y-%m-%d') AND F.SITEID = E.SITE_ID
+				)
+			</otherwise>
+		</choose>
+	</select>
+
+	<select id="findBankCheckExceptionPage" resultType="com.hgsoft.modules.bankbillcheck.entity.BankCheckException">
+		SELECT VEHICLE_PLATE VEHICLE_NUMBER,VEHICLE_COLOR,TRANSACTION_ID,BANK_DEDUCTION_ORDER_ID ORDER_ID,'联机' TRADE_MODE_NAME,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(EN_TIME,'%Y-%m-%d %H:%i:%s') EN_TIME,
+		DATE_FORMAT(EX_TIME,'%Y-%m-%d %H:%i:%s') EX_TIME,DEDUCTION_FEE FEE,DATE_FORMAT(TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADETIME,'异常' STATUS_NAME
+		FROM TB_ONLINE_EEXIT
+		WHERE SITE_ID = #{entity.siteId} AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s') AND BILL_RESULT IS NULL
+		<if test="entity.vehicleNumber != null and entity.vehicleNumber != ''">
+			AND VEHICLE_PLATE = #{entity.vehicleNumber}
+		</if>
+		<if test="entity.transactionId != null and entity.transactionId != ''">
+			AND TRANSACTION_ID = #{entity.transactionId}
+		</if>
+	</select>
+
+	<select id="findExceptionList" resultType="com.hgsoft.modules.bankbillcheck.entity.BankCheckException">
+		SELECT VEHICLE_PLATE VEHICLE_NUMBER,VEHICLE_COLOR,TRANSACTION_ID,BANK_DEDUCTION_ORDER_ID ORDER_ID,'联机' TRADE_MODE_NAME,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,DATE_FORMAT(EN_TIME,'%Y-%m-%d %H:%i:%s') EN_TIME,
+		DATE_FORMAT(EX_TIME,'%Y-%m-%d %H:%i:%s') EX_TIME,DEDUCTION_FEE FEE,DATE_FORMAT(TRANS_TIME,'%Y-%m-%d %H:%i:%s') TRADETIME,'异常' STATUS_NAME
+		FROM TB_ONLINE_EEXIT
+		WHERE SITE_ID = #{entity.siteId} AND TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s') AND BILL_RESULT IS NULL
+		<if test="entity.vehicleNumber != null and entity.vehicleNumber != ''">
+			AND VEHICLE_PLATE = #{entity.vehicleNumber}
+		</if>
+		<if test="entity.transactionId != null and entity.transactionId != ''">
+			AND TRANSACTION_ID = #{entity.transactionId}
+		</if>
+	</select>
+
+	<select id="findDetailList" resultType="com.hgsoft.modules.bankbillcheck.entity.BankCheckDetail">
+		SELECT
+			B.TRADE_DAY,B.MERCHANT_GROUP_ID,B.MERCHANT_ID,B.SITE_ID,B.EQUIPMENT_ID,B.TOTALCOUNT,B.TOTALAMOUNT,B.TOTALCHECKCOUNT,B.TOTALCHECKAMOUNT,B.TOTALCHECKCOUNT - B.TOTALCOUNT DIFFERCOUNT,B.TOTALCHECKAMOUNT - B.TOTALAMOUNT DIFFERAMOUNT
+		FROM(
+			SELECT
+				DATE_FORMAT(A.TRANS_TIME, '%Y-%m-%d') TRADE_DAY,
+				A.MERCHANT_GROUP_ID,
+				A.MERCHANT_ID,
+				A.SITE_ID,
+				A.EQUIPMENT_ID,
+				COUNT(A.SYS_ID) TOTALCOUNT,
+				SUM(A.DEDUCTION_FEE) TOTALAMOUNT,
+				SUM(
+				CASE
+				WHEN A.BILL_RESULT IS NOT NULL THEN
+				1
+				ELSE
+				0
+				END
+				) TOTALCHECKCOUNT,
+				SUM(
+				CASE
+				WHEN A.BILL_RESULT IS NOT NULL THEN
+				A.DEDUCTION_FEE
+				ELSE
+				0
+				END
+				) TOTALCHECKAMOUNT
+			FROM
+				TB_ONLINE_EEXIT A
+			WHERE
+				A.SITE_ID = #{entity.siteId} AND A.TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+				<if test="entity.equipmentId != null and entity.equipmentId != ''">
+					AND A.EQUIPMENT_ID = #{entity.equipmentId}
+				</if>
+			GROUP BY
+				DATE_FORMAT(A.TRANS_TIME, '%Y-%m-%d'),
+				A.MERCHANT_GROUP_ID,
+				A.MERCHANT_ID,
+				A.SITE_ID,
+				A.EQUIPMENT_ID
+		) B
+	</select>
+
+	<select id="findConfirmList" resultType="com.hgsoft.modules.bankbillcheck.entity.BankCheckConfirm">
+		SELECT
+			A.TRANS_DATE TRADE_DAY,
+			A.MERCHANT_GROUP_ID,
+			A.MERCHANT_ID,
+			A.SITE_ID
+		FROM
+			TB_BANK_BILL_CHECK_EXP_PLATFORM_ETC A
+		WHERE
+			<foreach collection="list" item="item" separator=") OR (" open="(" close=")">
+				A.SITE_ID = #{item.siteId} AND A.TRANS_DATE = #{item.tradeDay}
+			</foreach>
+	</select>
+
+	<update id="updateConfirmData">
+		UPDATE
+			TB_BANK_BILL_CHECK_EXP_PLATFORM_ETC
+		SET
+			TOTAL_COUNT = #{entity.totalConfirmCount},TOTAL_AMOUNT = #{entity.totalConfirmAmount},REMARK = CONCAT(REMARK,',',#{entity.remark}),CONFIRM_TIME = #{entity.confirmTime},CONFIRM_STATE = #{entity.confirmState},CONFIRM_MAN = #{entity.confirmMan}
+		WHERE
+			SITE_ID = #{entity.siteId} AND 	TRANS_DATE = #{entity.tradeDay}
+	</update>
+
+	<insert id="insertConfirmData">
+		INSERT INTO
+			TB_BANK_BILL_CHECK_EXP_PLATFORM_ETC(TRANS_DATE,MERCHANT_GROUP_ID,MERCHANT_ID,SITE_ID,TOTAL_COUNT,TOTAL_AMOUNT,REMARK,CONFIRM_TIME,CONFIRM_STATE,CONFIRM_MAN)
+		VALUES
+		<foreach collection="list" close=")" open="(" separator="),(" item="item">
+			#{item.tradeDay},#{item.merchantGroupId},#{item.merchantId},#{item.siteId},#{item.totalConfirmCount},#{item.totalConfirmAmount},#{item.remark},#{item.confirmTime},#{item.confirmState},#{item.confirmMan}
+		</foreach>
+	</insert>
+
+	<select id="findList" resultMap="bankCheckMap">
+		SELECT * FROM (
+		SELECT
+		C.TRADEDAY,
+		C.MERCHANTGROUPID,
+		C.MERCHANTID,
+		C.SITEID,
+		CASE
+		WHEN C.TOTALCOUNT = 0 THEN
+		NULL
+		ELSE
+		C.TOTALCOUNT
+		END TOTALCOUNT,
+		CASE
+		WHEN C.TOTALAMOUNT = 0 THEN
+		NULL
+		ELSE
+		C.TOTALAMOUNT
+		END TOTALAMOUNT,
+		CASE
+		WHEN C.TOTALCHECKCOUNT = 0 THEN
+		NULL
+		ELSE
+		C.TOTALCHECKCOUNT
+		END TOTALCHECKCOUNT,
+		CASE
+		WHEN C.TOTALCHECKAMOUNT = 0 THEN
+		NULL
+		ELSE
+		C.TOTALCHECKAMOUNT
+		END TOTALCHECKAMOUNT,
+		C.TOTALCHECKCOUNT - C.TOTALCOUNT DIFFERCOUNT,
+		C.TOTALCHECKAMOUNT - C.TOTALAMOUNT DIFFERAMOUNT,
+		B.TOTAL_COUNT TOTALCONFIRMCOUNT,
+		B.TOTAL_AMOUNT TOTALCONFIRMAMOUNT,
+		DATE_FORMAT(
+		B.CONFIRM_TIME,
+		'%Y-%m-%d %H:%i:%s'
+		) CHECKTIME,
+		B.REMARK,
+		CASE
+		WHEN B.CONFIRM_STATE IS NOT NULL THEN
+		B.CONFIRM_STATE
+		WHEN C.TOTALCOUNT = C.TOTALCHECKCOUNT
+		AND C.TOTALAMOUNT = C.TOTALCHECKAMOUNT THEN
+		2
+		ELSE
+		1
+		END CHECKSTATUS,
+		CASE WHEN B.CONFIRM_STATE IS NOT NULL THEN
+		1
+		WHEN C.TOTALCHECKCOUNT > 0 THEN
+		1
+		ELSE
+		2
+		END CHECKMODE
+		FROM
+		(
+		SELECT
+		DATE_FORMAT(A.TRANS_TIME, '%Y-%m-%d') TRADEDAY,
+		A.MERCHANT_GROUP_ID MERCHANTGROUPID,
+		A.MERCHANT_ID MERCHANTID,
+		A.SITE_ID SITEID,
+		COUNT(A.SYS_ID) TOTALCOUNT,
+		SUM(A.DEDUCTION_FEE) TOTALAMOUNT,
+		SUM(
+		CASE
+		WHEN A.BILL_RESULT IS NOT NULL THEN
+		1
+		ELSE
+		0
+		END
+		) TOTALCHECKCOUNT,
+		SUM(
+		CASE
+		WHEN A.BILL_RESULT IS NOT NULL THEN
+		A.DEDUCTION_FEE
+		ELSE
+		0
+		END
+		) TOTALCHECKAMOUNT
+		FROM
+		TB_ONLINE_EEXIT A
+		<where>
+			<if test="entity.userMerchantParam != null">
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						AND A.MERCHANT_GROUP_ID IN
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")"
+								 separator=",">
+							#{item}
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						AND A.MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+					</when>
+					<otherwise>
+						AND A.SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+			<if test="entity.timeScope != null and entity.timeScope.length > 0">
+				AND A.TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.serviceType != null">
+				AND A.SERVICE_TYPE = #{entity.serviceType}
+			</if>
+		</where>
+		GROUP BY
+		DATE_FORMAT(A.TRANS_TIME, '%Y-%m-%d'),
+		A.MERCHANT_GROUP_ID,
+		A.MERCHANT_ID,
+		A.SITE_ID
+		) C
+		LEFT JOIN TB_BANK_BILL_CHECK_EXP_PLATFORM_ETC B ON C.TRADEDAY = B.TRANS_DATE
+		AND C.MERCHANTGROUPID = B.MERCHANT_GROUP_ID
+		AND C.MERCHANTID = B.MERCHANT_ID
+		AND C.SITEID = B.SITE_ID
+		ORDER BY C.TRADEDAY DESC
+		) D
+		<where>
+			<if test="entity.checkStatus != null">
+				AND D.CHECKSTATUS = #{entity.checkStatus}
+			</if>
+		</where>
+	</select>
+
+	<select id="getSum" resultMap="bankCheckMap">
+		SELECT SUM(D.TOTALCOUNT) TOTALCOUNT,SUM(D.TOTALAMOUNT) TOTALAMOUNT,SUM(D.TOTALCHECKCOUNT) TOTALCHECKCOUNT,SUM(D.TOTALCHECKAMOUNT) TOTALCHECKAMOUNT,SUM(D.DIFFERCOUNT) DIFFERCOUNT,SUM(D.DIFFERAMOUNT) DIFFERAMOUNT
+		FROM (
+			SELECT
+			CASE
+			WHEN C.TOTALCOUNT = 0 THEN
+			NULL
+			ELSE
+			C.TOTALCOUNT
+			END TOTALCOUNT,
+			CASE
+			WHEN C.TOTALAMOUNT = 0 THEN
+			NULL
+			ELSE
+			C.TOTALAMOUNT
+			END TOTALAMOUNT,
+			CASE
+			WHEN C.TOTALCHECKCOUNT = 0 THEN
+			NULL
+			ELSE
+			C.TOTALCHECKCOUNT
+			END TOTALCHECKCOUNT,
+			CASE
+			WHEN C.TOTALCHECKAMOUNT = 0 THEN
+			NULL
+			ELSE
+			C.TOTALCHECKAMOUNT
+			END TOTALCHECKAMOUNT,
+			C.TOTALCHECKCOUNT - C.TOTALCOUNT DIFFERCOUNT,
+			C.TOTALCHECKAMOUNT - C.TOTALAMOUNT DIFFERAMOUNT,
+			CASE
+			WHEN B.CONFIRM_STATE IS NOT NULL THEN
+			B.CONFIRM_STATE
+			WHEN C.TOTALCOUNT = C.TOTALCHECKCOUNT
+			AND C.TOTALAMOUNT = C.TOTALCHECKAMOUNT THEN
+			2
+			ELSE
+			1
+			END CHECKSTATUS
+			FROM
+			(
+				SELECT
+				DATE_FORMAT(A.TRANS_TIME, '%Y-%m-%d') TRADEDAY,
+				A.MERCHANT_GROUP_ID MERCHANTGROUPID,
+				A.MERCHANT_ID MERCHANTID,
+				A.SITE_ID SITEID,
+				COUNT(A.SYS_ID) TOTALCOUNT,
+				SUM(A.DEDUCTION_FEE) TOTALAMOUNT,
+				SUM(
+				CASE
+				WHEN A.BILL_RESULT IS NOT NULL THEN
+				1
+				ELSE
+				0
+				END
+				) TOTALCHECKCOUNT,
+				SUM(
+				CASE
+				WHEN A.BILL_RESULT IS NOT NULL THEN
+				A.DEDUCTION_FEE
+				ELSE
+				0
+				END
+				) TOTALCHECKAMOUNT
+				FROM
+				TB_ONLINE_EEXIT A
+				<where>
+					<if test="entity.userMerchantParam != null">
+						<choose>
+							<when test="entity.userMerchantParam.nodeLevel == 1">
+								AND A.MERCHANT_GROUP_ID IN
+								<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")"
+										 separator=",">
+									#{item}
+								</foreach>
+							</when>
+							<when test="entity.userMerchantParam.nodeLevel == 2">
+								AND A.MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+							</when>
+							<otherwise>
+								AND A.SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+							</otherwise>
+						</choose>
+					</if>
+					<if test="entity.timeScope != null and entity.timeScope.length > 0">
+						AND A.TRANS_TIME BETWEEN STR_TO_DATE(#{entity.timeScope[0]},'%Y-%m-%d %H:%i:%s') AND
+						STR_TO_DATE(#{entity.timeScope[1]},'%Y-%m-%d %H:%i:%s')
+					</if>
+					<if test="entity.serviceType != null">
+						AND A.SERVICE_TYPE = #{entity.serviceType}
+					</if>
+				</where>
+				GROUP BY
+				DATE_FORMAT(A.TRANS_TIME, '%Y-%m-%d'),
+				A.MERCHANT_GROUP_ID,
+				A.MERCHANT_ID,
+				A.SITE_ID
+			) C
+			LEFT JOIN TB_BANK_BILL_CHECK_EXP_PLATFORM_ETC B ON C.TRADEDAY = B.TRANS_DATE
+			AND C.MERCHANTGROUPID = B.MERCHANT_GROUP_ID
+			AND C.MERCHANTID = B.MERCHANT_ID
+			AND C.SITEID = B.SITE_ID
+			ORDER BY C.TRADEDAY DESC
+		) D
+		<where>
+			<if test="entity.checkStatus != null">
+				AND D.CHECKSTATUS = #{entity.checkStatus}
+			</if>
+		</where>
+	</select>
+</mapper>

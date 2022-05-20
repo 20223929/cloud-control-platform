@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.monitor.mapper.ChargeExcepionMapper">
+
+	<resultMap type="com.hgsoft.modules.monitor.entity.ChargeExcepion" id="BaseResultMap" autoMapping="true">
+		<id column="trans_date" property="transDate" />
+		<id column="merchant_group_id" property="merchantGroupId" />
+		<id column="merchant_id" property="merchantId" />
+		<id column="site_id" property="siteId" />
+		<id column="equipment_id" property="equipmentId" />
+    	<result column="etc_count" property="etcCount" />
+    	<result column="etc_amount" property="etcAmount" />
+    	<result column="real_etc_count" property="realEtcCount" />
+    	<result column="real_etc_amount" property="realEtcAmount" />
+    	<result column="online_count" property="onlineCount" />
+    	<result column="online_amount" property="onlineAmount" />
+    	<result column="real_online_count" property="realOnlineCount" />
+    	<result column="real_online_amount" property="realOnlineAmount" />
+    	<result column="total_etc_count" property="totalEtcCount" />
+    	<result column="total_etc_amount" property="totalEtcAmount" />
+    	<result column="total_online_count" property="totalOnlineCount" />
+    	<result column="total_online_amount" property="totalOnlineAmount" />
+    	<result column="status" property="status" />
+    	<result column="confirm_time" property="confirmTime" />
+    	<result column="confirm_man" property="confirmMan" />
+    	<result column="remark" property="remark" />
+	</resultMap>
+
+	<select id="findPage" resultMap="BaseResultMap">
+		select * from
+		(SELECT A.*,'未处理' status
+		FROM (
+			SELECT C.trans_date,C.merchant_group_id,C.merchant_id,C.site_id,C.equipment_id,SUM(C.etc_count) etc_count,
+			SUM(C.etc_amount) etc_amount,SUM(C.real_etc_count) real_etc_count,SUM(C.real_etc_amount) real_etc_amount,
+			SUM(C.online_count) online_count,SUM(C.online_amount) online_amount,SUM(C.real_online_count) real_online_count,
+			SUM(C.real_online_amount) real_online_amount,SUM(C.etc_count + C.online_count) total_etc_count,SUM(C.etc_amount + C.online_amount) total_etc_amount,
+			SUM(C.real_etc_count + C.real_online_count) total_online_count,SUM(C.real_etc_amount + C.real_online_amount) total_online_amount
+			FROM (
+				SELECT trans_date,merchant_group_id,merchant_id,site_id,equipment_id,IFNULL(total_count,0) etc_count,IFNULL(total_amount,0) etc_amount,
+				IFNULL(real_count,0) real_etc_count,IFNULL(real_amount,0) real_etc_amount,0 online_count,0 online_amount,0 real_online_count,
+				0 real_online_amount
+				FROM TB_ETC_STATIC
+				<where>
+					<if test="entity.userMerchantParam != null">
+						<choose>
+							<when test="entity.userMerchantParam.nodeLevel == 1">
+								AND MERCHANT_GROUP_ID IN
+								<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+									#{item}
+								</foreach>
+							</when>
+							<when test="entity.userMerchantParam.nodeLevel == 2">
+								AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+							</when>
+							<otherwise>
+								AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+							</otherwise>
+						</choose>
+					</if>
+					<if test="entity.timeScope != null and entity.timeScope.length > 0">
+						AND trans_date BETWEEN #{entity.timeScope[0]} AND #{entity.timeScope[1]}
+					</if>
+					AND confirm_man IS NULL
+				</where>
+				UNION ALL
+				SELECT trans_date,merchant_group_id,merchant_id,site_id,equipment_id,0 etc_count,0 etc_amount,
+				0 real_etc_count,0 real_etc_amount,IFNULL(total_count,0) online_count,IFNULL(total_amount,0) online_amount,
+				IFNULL(real_count,0) real_online_count,IFNULL(real_amount,0) real_online_amount
+				FROM TB_ONLINE_STATIC
+				<where>
+					<if test="entity.userMerchantParam != null">
+						<choose>
+							<when test="entity.userMerchantParam.nodeLevel == 1">
+								AND MERCHANT_GROUP_ID IN
+								<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+									#{item}
+								</foreach>
+							</when>
+							<when test="entity.userMerchantParam.nodeLevel == 2">
+								AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+							</when>
+							<otherwise>
+								AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+							</otherwise>
+						</choose>
+					</if>
+					<if test="entity.timeScope != null and entity.timeScope.length > 0">
+						AND trans_date BETWEEN #{entity.timeScope[0]} AND #{entity.timeScope[1]}
+					</if>
+					AND confirm_man IS NULL
+				</where>
+			) C
+			GROUP BY trans_date,merchant_group_id,merchant_id,site_id,equipment_id
+		) A
+		WHERE A.etc_count != A.real_etc_count OR A.etc_amount != A.real_etc_amount OR A.online_count != A.real_online_count OR A.online_amount != A.real_online_amount
+		ORDER BY A.trans_date,A.merchant_group_id,A.merchant_id,A.site_id,A.equipment_id
+		    )b order by b.trans_date desc
+	</select>
+
+	<select id="findListByCondition" resultMap="BaseResultMap">
+		select * from
+		(SELECT A.*,'未处理' status
+		FROM (
+			SELECT C.trans_date,C.merchant_group_id,C.merchant_id,C.site_id,C.equipment_id,SUM(C.etc_count) etc_count,
+			SUM(C.etc_amount) etc_amount,SUM(C.real_etc_count) real_etc_count,SUM(C.real_etc_amount) real_etc_amount,
+			SUM(C.online_count) online_count,SUM(C.online_amount) online_amount,SUM(C.real_online_count) real_online_count,
+			SUM(C.real_online_amount) real_online_amount,SUM(C.etc_count + C.online_count) total_etc_count,SUM(C.etc_amount + C.online_amount) total_etc_amount,
+			SUM(C.real_etc_count + C.real_online_count) total_online_count,SUM(C.real_etc_amount + C.real_online_amount) total_online_amount
+			FROM (
+				SELECT trans_date,merchant_group_id,merchant_id,site_id,equipment_id,IFNULL(total_count,0) etc_count,IFNULL(total_amount,0) etc_amount,
+				IFNULL(real_count,0) real_etc_count,IFNULL(real_amount,0) real_etc_amount,0 online_count,0 online_amount,0 real_online_count,
+				0 real_online_amount
+				FROM TB_ETC_STATIC
+				<where>
+					<if test="entity.userMerchantParam != null">
+						<choose>
+							<when test="entity.userMerchantParam.nodeLevel == 1">
+								AND MERCHANT_GROUP_ID IN
+								<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+									#{item}
+								</foreach>
+							</when>
+							<when test="entity.userMerchantParam.nodeLevel == 2">
+								AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+							</when>
+							<otherwise>
+								AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+							</otherwise>
+						</choose>
+					</if>
+					<if test="entity.timeScope != null and entity.timeScope.length > 0">
+						AND trans_date BETWEEN #{entity.timeScope[0]} AND #{entity.timeScope[1]}
+					</if>
+					AND confirm_man IS NULL
+				</where>
+				UNION ALL
+				SELECT trans_date,merchant_group_id,merchant_id,site_id,equipment_id,0 etc_count,0 etc_amount,
+				0 real_etc_count,0 real_etc_amount,IFNULL(total_count,0) online_count,IFNULL(total_amount,0) online_amount,
+				IFNULL(real_count,0) real_online_count,IFNULL(real_amount,0) real_online_amount
+				FROM TB_ONLINE_STATIC
+				<where>
+					<if test="entity.userMerchantParam != null">
+						<choose>
+							<when test="entity.userMerchantParam.nodeLevel == 1">
+								AND MERCHANT_GROUP_ID IN
+								<foreach collection="entity.userMerchantParam.searchIds" item="item" open="(" close=")" separator=",">
+									#{item}
+								</foreach>
+							</when>
+							<when test="entity.userMerchantParam.nodeLevel == 2">
+								AND MERCHANT_ID = #{entity.userMerchantParam.searchIds[0]}
+							</when>
+							<otherwise>
+								AND SITE_ID = #{entity.userMerchantParam.searchIds[0]}
+							</otherwise>
+						</choose>
+					</if>
+					<if test="entity.timeScope != null and entity.timeScope.length > 0">
+						AND trans_date BETWEEN #{entity.timeScope[0]} AND #{entity.timeScope[1]}
+					</if>
+					AND confirm_man IS NULL
+				</where>
+			) C
+			GROUP BY trans_date,merchant_group_id,merchant_id,site_id,equipment_id
+		) A
+		WHERE A.etc_count != A.real_etc_count OR A.etc_amount != A.real_etc_amount OR A.online_count != A.real_online_count OR A.online_amount != A.real_online_amount
+		ORDER BY A.trans_date,A.merchant_group_id,A.merchant_id,A.site_id,A.equipment_id
+		)b order by b.trans_date desc
+	</select>
+
+	<update id="confirmEtc">
+		UPDATE TB_ETC_STATIC SET confirm_time = #{entity.confirmTime},confirm_man = #{entity.confirmMan},remark = #{entity.remark}
+		<where>
+			<foreach collection="list" close=";" item="item" separator=" OR ">
+				(trans_date,merchant_group_id,merchant_id,site_id,equipment_id) = (#{item.transDate},#{item.merchantGroupId},#{item.merchantId},#{item.siteId},#{item.equipmentId})
+			</foreach>
+		</where>
+	</update>
+
+	<update id="confirmOnline">
+		UPDATE TB_ONLINE_STATIC SET confirm_time = #{entity.confirmTime},confirm_man = #{entity.confirmMan},remark = #{entity.remark}
+		<where>
+			<foreach collection="list" close=";" item="item" separator=" OR ">
+				(trans_date,merchant_group_id,merchant_id,site_id,equipment_id) = (#{item.transDate},#{item.merchantGroupId},#{item.merchantId},#{item.siteId},#{item.equipmentId})
+			</foreach>
+		</where>
+	</update>
+</mapper>

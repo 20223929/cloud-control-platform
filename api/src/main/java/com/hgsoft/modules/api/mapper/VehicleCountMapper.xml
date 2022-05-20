@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.api.mapper.VehicleCountMapper">
+
+    <select id="findByTime" resultType="com.hgsoft.modules.api.entity.VehicleCountVo">
+        select service_type,
+                sum(total) total,
+                sum(fee) fee
+        from (
+            select service_type,
+            count(sys_id) total,
+            sum(merchant_pay_fee) fee
+            from tb_online_eexit
+            <where>
+                <if test="beginTime != null and endTime != null">
+                    AND trans_time between #{beginTime} and #{endTime}
+                </if>
+            </where>
+            group by service_type
+            union all
+            select service_type,
+            count(sys_id) total,
+            sum(merchant_pay_fee) fee
+            from tb_etc_transaction_eexit
+            <where>
+                <if test="beginTime != null and endTime != null">
+                    AND trans_time between #{beginTime} and #{endTime}
+                </if>
+            </where>
+            group by service_type
+        ) a
+        group by service_type
+    </select>
+
+</mapper>

@@ -1,0 +1,217 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.settlementreject.mapper.SettlementRejectMapper">
+
+	<resultMap type="com.hgsoft.modules.settlementreject.entity.SettlementReject" id="BaseResultMap" autoMapping="true">
+		<id column="sys_id" property="sysId" />
+    	<result column="settlement_id" property="settlementId" />
+    	<result column="is_gdetc" property="isGdetc" />
+    	<result column="en_time" property="enTime" />
+    	<result column="ex_time" property="exTime" />
+    	<result column="trans_time" property="transTime" />
+    	<result column="transaction_id" property="transactionId" />
+    	<result column="merchant_id" property="merchantId" />
+    	<result column="merchant_name" property="merchantName" />
+    	<result column="site_id" property="siteId" />
+    	<result column="site_name" property="siteName" />
+    	<result column="vehicle_plate" property="vehiclePlate" />
+    	<result column="vehicle_color" property="vehicleColor" />
+    	<result column="vehicle_type" property="vehicleType" />
+    	<result column="card_id" property="cardId" />
+    	<result column="obu_id" property="obuId" />
+    	<result column="fee" property="fee" />
+    	<result column="trans_sta" property="transSta" />
+    	<result column="createtime" property="createtime" />
+	</resultMap>
+
+	<sql id="settlementRejectColumns">
+		a.sys_id AS "sysId",
+		a.settlement_id AS "settlementId",
+		a.is_gdetc AS "isGdetc",
+		a.en_time AS "enTime",
+		a.ex_time AS "exTime",
+		a.trans_time AS "transTime",
+		a.transaction_id AS "transactionId",
+		a.merchant_id AS "merchantId",
+		a.merchant_name AS "merchantName",
+		a.site_id AS "siteId",
+		a.site_name AS "siteName",
+		a.vehicle_plate AS "vehiclePlate",
+		a.vehicle_color AS "vehicleColor",
+		a.vehicle_type AS "vehicleType",
+		a.card_id AS "cardId",
+		a.obu_id AS "obuId",
+		a.fee AS "fee",
+		a.trans_sta AS "transSta",
+		a.createtime AS "createtime"
+	</sql>
+
+	<sql id="settlementRejectJoins">
+	</sql>
+
+
+	<select id="getById" resultType="com.hgsoft.modules.settlementreject.entity.SettlementReject" >
+		SELECT
+			<include refid="settlementRejectColumns"/>
+		FROM tb_settlement_reject a
+		<include refid="settlementRejectJoins"/>
+		WHERE a.sysId = #{sys_id}
+	</select>
+
+
+	<select id="getByEntity" resultType="com.hgsoft.modules.settlementreject.entity.SettlementReject" >
+		SELECT
+			<include refid="settlementRejectColumns"/>
+		FROM tb_settlement_reject a
+		<include refid="settlementRejectJoins"/>
+		WHERE a.sysId = #{sys_id}
+	</select>
+
+	<select id="findPage" resultType="com.hgsoft.modules.settlementreject.entity.SettlementReject" >
+		SELECT
+			<include refid="settlementRejectColumns" />
+		FROM tb_settlement_reject a
+		<include refid="settlementRejectJoins"/>
+		<where>
+			<if test="entity.settlementId != null and entity.settlementId != ''">
+			AND a.settlement_id = #{entity.settlementId}
+	        </if>
+			<if test="entity.transTime != null and entity.transTime != ''">
+			AND a.trans_time = #{entity.transTime}
+	        </if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+			AND a.merchant_id = #{entity.merchantId}
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+			AND a.site_id = #{entity.siteId}
+	        </if>
+			<if test="entity.isGdetc != null and entity.isGdetc != ''">
+				AND a.is_gdetc = #{entity.isGdetc}
+			</if>
+		</where>
+	</select>
+
+	<select id="findList" resultType="com.hgsoft.modules.settlementreject.entity.SettlementReject" >
+		SELECT
+			<include refid="settlementRejectColumns"/>
+		FROM tb_settlement_reject a
+		<include refid="settlementRejectJoins"/>
+		<where>
+    			<if test="settlementId != null">
+			    AND a.settlement_id = #{settlementId}
+    	</if>
+    			<if test="transTime != null">
+			    AND a.trans_time = #{transTime}
+    	</if>
+			<if test="merchantId != null and merchantId != ''">
+				AND a.merchant_id = #{merchantId}
+			</if>
+    			<if test="siteId != null and siteId != ''">
+			    AND a.site_id = #{siteId}
+    	</if>
+			<if test="isGdetc != null and isGdetc != ''">
+				AND a.is_gdetc = #{isGdetc}
+			</if>
+		</where>
+	</select>
+
+	<select id="findAllList" resultType="com.hgsoft.modules.settlementreject.entity.SettlementReject" >
+		SELECT
+			<include refid="settlementRejectColumns"/>
+		FROM tb_settlement_reject a
+		<include refid="settlementRejectJoins"/>
+		<where>
+		</where>
+	</select>
+
+	<insert id="insertEntity">
+		INSERT INTO tb_settlement_reject(
+			sys_id,
+			settlement_id,
+			is_gdetc,
+			en_time,
+			ex_time,
+			trans_time,
+			transaction_id,
+			merchant_id,
+			merchant_name,
+			site_id,
+			site_name,
+			vehicle_plate,
+			vehicle_color,
+			vehicle_type,
+			card_id,
+			obu_id,
+			fee,
+			trans_sta,
+			createtime
+		) VALUES (
+            #{sysId},
+            #{settlementId},
+            #{isGdetc},
+            #{enTime},
+            #{exTime},
+            #{transTime},
+            #{transactionId},
+            #{merchantId},
+            #{merchantName},
+            #{siteId},
+            #{siteName},
+            #{vehiclePlate},
+            #{vehicleColor},
+            #{vehicleType},
+            #{cardId},
+            #{obuId},
+            #{fee},
+            #{transSta},
+            #{createtime}
+		)
+	</insert>
+
+	<update id="updateEntity">
+		UPDATE tb_settlement_reject
+		<trim prefix="set" suffixOverrides=",">
+                  sys_id = #{sysId},
+                  settlement_id = #{settlementId},
+                  is_gdetc = #{isGdetc},
+                  en_time = #{enTime},
+                  ex_time = #{exTime},
+                  trans_time = #{transTime},
+                  transaction_id = #{transactionId},
+                  merchant_id = #{merchantId},
+                  merchant_name = #{merchantName},
+                  site_id = #{siteId},
+                  site_name = #{siteName},
+                  vehicle_plate = #{vehiclePlate},
+                  vehicle_color = #{vehicleColor},
+                  vehicle_type = #{vehicleType},
+                  card_id = #{cardId},
+                  obu_id = #{obuId},
+                  fee = #{fee},
+                  trans_sta = #{transSta},
+                  createtime = #{createtime}
+        </trim>
+		WHERE a.sysId = #{sys_id}
+	</update>
+
+
+	<delete id="removeById">
+		DELETE
+		FROM tb_settlement_reject
+		WHERE a.sysId = #{sys_id}
+	</delete>
+
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+		UPDATE tb_settlement_reject SET
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE sysId = #{sys_id}
+	</update>
+
+
+	<!-- 根据实体名称和字段名称和字段值获取唯一记录 -->
+	<select id="findUniqueByProperty" resultType="com.hgsoft.modules.settlementreject.entity.SettlementReject" statementType="STATEMENT">
+		select * FROM tb_settlement_reject  where ${propertyName} = '${value}'
+	</select>
+
+</mapper>

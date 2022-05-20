@@ -1,0 +1,78 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.gdetc.mapper.GdetcProfitMapper">
+
+    <resultMap type="com.hgsoft.modules.gdetc.entity.GdetcProfit" id="BaseResultMap" autoMapping="true">
+        <id column="sys_id" property="sysId"/>
+        <result column="merchant_group_id" property="merchantGroupId"/>
+        <result column="merchant_id" property="merchantId"/>
+        <result column="merchant_name" property="merchantName"/>
+        <result column="site_id" property="siteId"/>
+        <result column="site_name" property="siteName"/>
+        <result column="trx_date" property="trxDate"/>
+        <result column="toll_settlement_interval" property="tollSettlementInterval"/>
+        <result column="toll_settlement_date" property="tollSettlementDate"/>
+        <result column="total_gdetc_cnt" property="totalGdetcCnt"/>
+        <result column="total_gdetc_amt" property="totalGdetcAmt"/>
+        <result column="reject_gdetc_cnt" property="rejectGdetcCnt"/>
+        <result column="reject_gdetc_amt" property="rejectGdetcAmt"/>
+        <result column="actual_gdetc_amt" property="actualGdetcAmt"/>
+        <result column="center_service_rate" property="centerServiceRate"/>
+        <result column="service_gdetc_amt" property="serviceGdetcAmt"/>
+    </resultMap>
+
+    <sql id="whereCondition">
+        <where>
+            total_gdetc_cnt + reject_gdetc_cnt > 0
+            <if test="condition.merchantGroupId != null and condition.merchantGroupId != ''">
+                and merchant_group_id = #{condition.merchantGroupId}
+            </if>
+            <if test="condition.merchantId != null and condition.merchantId != ''">
+                and merchant_id = #{condition.merchantId}
+            </if>
+            <if test="condition.siteId != null and condition.siteId != ''">
+                and site_id = #{condition.siteId}
+            </if>
+            <if test="condition.interval != null">
+                and toll_settlement_interval = #{condition.interval}
+            </if>
+            <if test="condition.transTime != null and condition.transTime.length > 0">
+                <choose>
+                    <when test="condition.interval == null">
+                        and ((toll_settlement_interval in (1,2) and trx_date between #{condition.transTime[0]} and #{condition.transTime[1]})
+                        or (toll_settlement_interval = 3 and trx_date between left(#{condition.transTime[0]},7) and left(#{condition.transTime[1]},7)))
+                    </when>
+                    <when test="condition.interval == 3">
+                        and trx_date between left(#{condition.transTime[0]},7) and left(#{condition.transTime[1]},7)
+                    </when>
+                    <otherwise>
+                        and trx_date between #{condition.transTime[0]} and #{condition.transTime[1]}
+                    </otherwise>
+                </choose>
+            </if>
+            <if test="condition.serviceType != null">
+                and service_type = #{condition.serviceType}
+            </if>
+        </where>
+    </sql>
+
+    <select id="findPageByCondition" resultMap="BaseResultMap">
+        select sys_id,merchant_group_id,merchant_id,merchant_name,site_id,site_name,trx_date,toll_settlement_interval,toll_settlement_date,total_gdetc_cnt,total_gdetc_amt,reject_gdetc_cnt,reject_gdetc_amt,actual_gdetc_amt,center_service_rate,service_gdetc_amt
+        from tb_settlement_report
+        <include refid="whereCondition"/>
+        order by site_id asc,trx_date desc
+    </select>
+
+    <select id="findListByCondition" resultMap="BaseResultMap">
+        select merchant_group_id,merchant_id,merchant_name,site_id,site_name,trx_date,toll_settlement_interval,toll_settlement_date,total_gdetc_cnt,total_gdetc_amt,reject_gdetc_cnt,reject_gdetc_amt,actual_gdetc_amt,center_service_rate,service_gdetc_amt
+        from tb_settlement_report
+        <include refid="whereCondition"/>
+        order by site_id asc,trx_date desc
+    </select>
+
+    <select id="findSum" resultMap="BaseResultMap">
+        select sum(total_gdetc_cnt) total_gdetc_cnt,sum(total_gdetc_amt) total_gdetc_amt,sum(reject_gdetc_cnt) reject_gdetc_cnt,sum(reject_gdetc_amt) reject_gdetc_amt,sum(actual_gdetc_amt) actual_gdetc_amt,sum(service_gdetc_amt) service_gdetc_amt
+        from tb_settlement_report
+        <include refid="whereCondition"/>
+    </select>
+</mapper>

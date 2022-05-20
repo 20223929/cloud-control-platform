@@ -1,0 +1,126 @@
+# 这个是单机版测试环境的配置
+server:
+  port: 9090
+  use-forward-headers: true
+  servlet:
+    context-path: /
+  tomcat:
+    uri-encoding: UTF-8
+    remote_ip_header: x-forwarded-for
+    protocol_header: x-forwarded-proto
+    port-header: X-Forwarded-Port
+
+spring:
+  application:
+    name: alone-api
+  liquibase:
+    enabled: true
+    contexts: "init,!test"
+  cache:
+    type: redis
+  redis:
+    host: 172.16.64.53
+    port: 6379
+    database: 14
+    password: ENC(yjFC9mf8M/PVQ/S3ovPIZA7F1i1BqiKj)
+    expireTime: 86400
+    lettuce:
+      pool:
+        max-active: 16
+        max-wait: 1s
+        max-idle: 8
+        min-idle: 4
+  jackson:
+    serialization:
+      INDENT_OUTPUT: true
+    date-format: yyyy-MM-dd HH:mm:ss
+    joda-date-time-format: yyyy-MM-dd HH:mm:ss
+    default-property-inclusion: non_null
+    time-zone: GMT+8
+
+  datasource:
+    druid:
+      stat-view-servlet:
+        enabled: true
+        loginUsername: admin
+        loginPassword: ENC(jWeZ0utnHHatSKZS5xV95wxucrhiXeJ6)
+        allow: 10.173.0.0/16
+      web-stat-filter:
+        enabled: true
+    dynamic:
+      druid: # 全局druid参数，绝大部分值和默认保持一致。(现已支持的参数如下,不清楚含义不要乱设置)
+        # 连接池的配置信息
+        # 初始化大小，最小，最大
+        initial-size: 5
+        min-idle: 5
+        maxActive: 20
+        # 配置获取连接等待超时的时间
+        maxWait: 60000
+        # 配置间隔多久才进行一次检测，检测需要关闭的空闲连接，单位是毫秒
+        timeBetweenEvictionRunsMillis: 60000
+        # 配置一个连接在池中最小生存的时间，单位是毫秒
+        minEvictableIdleTimeMillis: 300000
+        testWhileIdle: true
+        testOnBorrow: false
+        testOnReturn: false
+        # 打开PSCache，并且指定每个连接上PSCache的大小
+        poolPreparedStatements: true
+        maxPoolPreparedStatementPerConnectionSize: 20
+        # 配置监控统计拦截的filters，去掉后监控界面sql无法统计，'wall'用于防火墙
+        filters: stat
+      datasource:
+        master:
+          url: jdbc:mysql://rm-2zek6387jey529nj4.mysql.rds.aliyuncs.com:3306/exp-platform-etc?useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&serverTimezone=GMT%2B8
+          username: expplatform
+          password: ENC(QmMysz/Uur4mLkI3thQMNEMJ0QKO+6em)
+          druid: #这里可以重写默认值
+            validationQuery: SELECT 'x'
+  http:
+    encoding:
+      charset: UTF-8
+      enabled: true
+      force: true
+  messages:
+    encoding: UTF-8
+    basename: i18n/framework/i18n,i18n/common/i18n,i18n/web/i18n
+
+open-api:
+  url: http://localhost:${server.port}${server.servlet.context-path}
+  app-id: ${ecip.appId} #应用id，跟ecip.appId一致
+  app-secret: hj0ype2f2m1c4svehm8g50pffq8feh9b #应用秘钥
+
+merchant:
+  bankMerchantGroupId: 123456
+  provinceId: 51
+  merchantGroupSeq: expplatformetc:merchant_group:generator
+  merchantSeq: expplatformetc:merchant:{}:generator
+  siteSeq: expplatformetc:site:{}:generator
+  certFilePath: D:\data\merchant
+  hashKeyPrefix: expplatformgateway
+  merchantCertHashKeySuffix: platform_merchant_cert
+  channelHashKeySuffix: channels
+  siteChannelHashKeySuffix: platform_site_channel
+  certFileNameKeySuffix: certfilename
+  algName: RSA
+  publicKeyLength: 2048
+snowflake-id-center:
+  work-id: 1
+  data-center-id: 1
+exp-platform:
+  cert-path: D:\data\client.cer
+pay-gateway:
+  url: localhost:8189
+  client-cert-path: D:\data\client.cer
+  password:
+  client-private-key-path: D:\data\client_key.der
+  server-cert-path: D:\data\paymentgateway.cer
+  authorization-type: HGSOFTPAY-SHA256-RSA2048
+  chnlid: 123456
+  prefix: Hgsoftpay
+  timeout: 60000
+  other:
+    refund-uri: /payment-gateway/v1/refunds
+    query-refund-result-uri: /payment-gateway/v1/pay/transactions/type/{}/id/{}
+
+
+

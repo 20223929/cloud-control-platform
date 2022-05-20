@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.monitor.mapper.BlacklistVersionMapper">
+
+	<resultMap type="com.hgsoft.modules.monitor.entity.BlacklistVersion" id="BaseResultMap" autoMapping="true">
+		<result column="FULL_ETC_BLACK_VERSION" property="fullEtcBlackVersion"/>
+		<result column="FULL_ETC_BLACK_UPDATE_TIME" property="fullEtcBlackUpdateTime"/>
+		<result column="INCREMENT_ETC_BLACK_VERSION" property="incrementEtcBlackVersion"/>
+		<result column="INCREMENT_ETC_BLACK_UPDATE_TIME" property="incrementEtcBlackUpdateTime"/>
+		<result column="FULL_OBU_BLACK_VERSION" property="fullObuBlackVersion"/>
+		<result column="FULL_OBU_BLACK_UPDATE_TIME" property="fullObuBlackUpdateTime"/>
+		<result column="INCREMENT_OBU_BLACK_VERSION" property="incrementObuBlackVersion"/>
+		<result column="INCREMENT_OBU_BLACK_UPDATE_TIME" property="incrementObuBlackUpdateTime"/>
+	</resultMap>
+	<select id="getBlacklistVersion" resultMap="BaseResultMap">
+		(SELECT DATE_FORMAT(LAST_UPDATE_TIME,'%Y-%m-%d %H:%i:%s') FULL_ETC_BLACK_UPDATE_TIME,VERSION FULL_ETC_BLACK_VERSION,NULL INCREMENT_ETC_BLACK_VERSION,NULL INCREMENT_ETC_BLACK_UPDATE_TIME,NULL FULL_OBU_BLACK_VERSION,NULL FULL_OBU_BLACK_UPDATE_TIME,
+		NULL INCREMENT_OBU_BLACK_VERSION,NULL INCREMENT_OBU_BLACK_UPDATE_TIME
+		FROM TB_BLACKLIST_VERSION
+		WHERE BLACK_TYPE = 1 AND PACKAGE_TYPE = 0
+		ORDER BY VERSION DESC
+		LIMIT 1)
+		UNION ALL
+		(SELECT NULL,NULL,VERSION,DATE_FORMAT(LAST_UPDATE_TIME,'%Y-%m-%d %H:%i:%s'),NULL,NULL,NULL,NULL
+		FROM TB_BLACKLIST_VERSION
+		WHERE BLACK_TYPE = 1 AND PACKAGE_TYPE = 1
+		ORDER BY VERSION DESC
+		LIMIT 1)
+		UNION ALL
+		(SELECT NULL,NULL,NULL,NULL,VERSION,DATE_FORMAT(LAST_UPDATE_TIME,'%Y-%m-%d %H:%i:%s'),NULL,NULL
+		FROM TB_BLACKLIST_VERSION
+		WHERE BLACK_TYPE = 2 AND PACKAGE_TYPE = 0
+		ORDER BY VERSION DESC
+		LIMIT 1)
+		UNION ALL
+		(SELECT NULL,NULL,NULL,NULL,NULL,NULL,VERSION,DATE_FORMAT(LAST_UPDATE_TIME,'%Y-%m-%d %H:%i:%s')
+		FROM TB_BLACKLIST_VERSION
+		WHERE BLACK_TYPE = 2 AND PACKAGE_TYPE = 1
+		ORDER BY VERSION DESC
+		LIMIT 1)
+	</select>
+</mapper>

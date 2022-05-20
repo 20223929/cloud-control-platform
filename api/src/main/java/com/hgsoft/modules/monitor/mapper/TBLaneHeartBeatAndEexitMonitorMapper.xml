@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.monitor.mapper.TBLaneHeartBeatAndEexitMonitorMapper">
+
+    <resultMap type="com.hgsoft.modules.monitor.entity.TbLaneHeartBeatAndEexitMonitor" id="BaseResultMap" autoMapping="true">
+        <result column="merchant_group_id" property="merchantGroupId" />
+        <result column="merchant_id" property="merchantId" />
+        <result column="service_type" property="serviceType" />
+        <result column="all_site_count" property="allSiteCount" />
+        <result column="all_soft_count" property="allSoftCount" />
+        <result column="disable_soft_count" property="disableSoftCount" />
+        <result column="enable_soft_count" property="enableSoftCount" />
+        <result column="heart_beat_normal" property="heartBeatNormal" />
+        <result column="heart_beat_lose_over12h" property="heartBeatLoseOver12h" />
+        <result column="heart_beat_lose_over24h" property="heartBeatLoseOver24h" />
+        <result column="heart_beat_lose_over7d" property="heartBeatLoseOver7d" />
+        <result column="un_upload_eexit_count" property="unUploadEexitCount" />
+        <result column="un_upload_eexit_amount" property="unUploadEexitAmount" />
+        <result column="upload_eexit_count" property="uploadEexitCount" />
+        <result column="upload_eexit_amount" property="uploadEexitAmount" />
+        <result column="province_recv_eexit_count" property="provinceRecvEexitCount" />
+        <result column="province_recv_eexit_amount" property="provinceRecvEexitAmount" />
+    </resultMap>
+
+    <sql id="baseSql">
+        select
+        merchant_group_id,
+        merchant_id,
+        service_type,
+        all_site_count,
+        all_soft_count,
+        disable_soft_count,
+        enable_soft_count,
+        heart_beat_normal,
+        heart_beat_lose_over12h,
+        heart_beat_lose_over24h,
+        heart_beat_lose_over7d,
+        un_upload_eexit_count,
+        un_upload_eexit_amount,
+        upload_eexit_count,
+        upload_eexit_amount,
+        province_recv_eexit_count,
+        province_recv_eexit_amount
+        from
+        tb_lane_heart_beat_and_eexit_monitor
+        <where>
+            <if test="entity.merchantId != null and entity.merchantId != ''">
+                AND merchant_id = #{entity.merchantId}
+            </if>
+            <if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+                AND merchant_group_id = #{entity.merchantGroupId}
+            </if>
+            <if test="entity.serviceType">
+                AND service_type = #{entity.serviceType}
+            </if>
+        </where>
+    </sql>
+    <select id="findSearchDataPage" resultMap="BaseResultMap">
+        <include refid="baseSql"/>
+    </select>
+    <select id="findSearchDataAll" resultMap="BaseResultMap">
+        <include refid="baseSql"/>
+    </select>
+
+</mapper>

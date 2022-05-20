@@ -1,0 +1,411 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.merchant.mapper.TbMerchantMapper">
+
+	<resultMap type="com.hgsoft.modules.merchant.entity.TbMerchant" id="BaseResultMap" autoMapping="true">
+		<id column="id" property="id" />
+    	<result column="name" property="name" />
+    	<result column="code" property="code" />
+    	<result column="sort" property="sort" />
+    	<result column="node_level" property="nodeLevel" />
+    	<result column="parent_ids" property="parentIds" />
+    	<result column="parent_id" property="parentId" />
+    	<result column="id_card_type" property="idCardType" />
+    	<result column="id_card_num" property="idCardNum" />
+    	<result column="agent_name" property="agentName" />
+    	<result column="mobile" property="mobile" />
+    	<result column="contact" property="contact" />
+    	<result column="tel" property="tel" />
+    	<result column="bank" property="bank" />
+    	<result column="bank_branch" property="bankBranch" />
+    	<result column="bank_account_name" property="bankAccountName" />
+    	<result column="bank_account" property="bankAccount" />
+    	<result column="settle_period" property="settlePeriod" />
+    	<result column="clear_service_rate" property="clearServiceRate" />
+    	<result column="address" property="address" />
+    	<result column="lat" property="lat" />
+    	<result column="lng" property="lng" />
+    	<result column="province_num" property="provinceNum" />
+    	<result column="start_time" property="startTime" />
+    	<result column="end_time" property="endTime" />
+    	<result column="operator_id" property="operatorId" />
+    	<result column="clear_service_type" property="clearServiceType" />
+    	<result column="union_service_type" property="unionServiceType" />
+    	<result column="union_service_rate" property="unionServiceRate" />
+    	<result column="bank_address" property="bankAdress" />
+    	<result column="merchant_type" property="merchantType" />
+    	<result column="access_type" property="accessType" />
+    	<result column="entrance_num" property="entranceNum" />
+    	<result column="exit_num" property="exitNum" />
+    	<result column="parking_space_num" property="parkingSpaceNum" />
+    	<result column="compressor_gun_num" property="compressorGunNum" />
+    	<result column="mer_group_no" property="merGroupNo" />
+    	<result column="merchant_no" property="merchantNo" />
+    	<result column="mer_prtcl_no" property="merPrtclNo" />
+    	<result column="enabled" property="enabled" />
+    	<result column="trx_place" property="trxPlace" />
+    	<result column="bank_rate" property="bankRate" />
+    	<result column="create_by" property="createBy.id" />
+    	<result column="create_date" property="createDate" />
+    	<result column="update_by" property="updateBy.id" />
+    	<result column="update_date" property="updateDate" />
+    	<result column="remarks" property="remarks" />
+	</resultMap>
+
+	<sql id="tbMerchantColumns">
+		a.id AS "id",
+		a.name AS "name",
+		a.code AS "code",
+		a.sort AS "sort",
+		a.node_level AS "nodeLevel",
+		a.parent_ids AS "parentIds",
+		a.parent_id AS "parentId",
+		a.id_card_type AS "idCardType",
+		a.id_card_num AS "idCardNum",
+		a.agent_name AS "agentName",
+		a.mobile AS "mobile",
+		a.contact AS "contact",
+		a.tel AS "tel",
+		a.bank AS "bank",
+		a.bank_branch AS "bankBranch",
+		a.bank_account_name AS "bankAccountName",
+		a.bank_account AS "bankAccount",
+		a.settle_period AS "settlePeriod",
+		a.clear_service_rate AS "clearServiceRate",
+		a.address AS "address",
+		a.lat AS "lat",
+		a.lng AS "lng",
+		a.province_num AS "provinceNum",
+		a.start_time AS "startTime",
+		a.end_time AS "endTime",
+		a.operator_id AS "operatorId",
+		a.clear_service_type AS "clearServiceType",
+		a.union_service_type AS "unionServiceType",
+		a.union_service_rate AS "unionServiceRate",
+		a.bank_address AS "bankAdress",
+		a.merchant_type AS "merchantType",
+		a.access_type AS "accessType",
+		a.entrance_num AS "entranceNum",
+		a.exit_num AS "exitNum",
+		a.parking_space_num AS "parkingSpaceNum",
+		a.compressor_gun_num AS "compressorGunNum",
+		a.mer_group_no AS "merGroupNo",
+		a.merchant_no AS "merchantNo",
+		a.mer_prtcl_no AS "merPrtclNo",
+		a.enabled AS "enabled",
+		a.trx_place AS "trxPlace",
+		a.bank_rate AS "bankRate",
+		a.create_by AS "createBy.id",
+		a.create_date AS "createDate",
+		a.update_by AS "updateBy.id",
+		a.update_date AS "updateDate",
+		a.remarks AS "remarks"
+	</sql>
+
+	<sql id="tbMerchantJoins">
+	</sql>
+
+    <select id="getById" resultType="com.hgsoft.modules.merchant.entity.TbMerchant">
+        SELECT
+        <include refid="tbMerchantColumns" />
+        FROM tb_merchant a
+        <include refid="tbMerchantJoins" />
+        WHERE a.id = #{id}
+    </select>
+
+    <select id="getByEntity" resultType="com.hgsoft.modules.merchant.entity.TbMerchant">
+        SELECT
+        <include refid="tbMerchantColumns" />
+        FROM tb_merchant a
+        <include refid="tbMerchantJoins" />
+        WHERE a.id = #{id}
+    </select>
+
+    <select id="findTreeList" resultType="com.hgsoft.modules.merchant.entity.TbMerchant">
+        SELECT
+        <include refid="tbMerchantColumns"/>
+        FROM tb_merchant a
+        <include refid="tbMerchantJoins" />
+        <where>
+
+            ${entity.dataScope}
+            <if test="excludeId != null and excludeId != ''">
+                <bind name="pathExcludeId" value="'%,' + excludeId + ',%'"/>
+                AND a.parent_ids not like #{pathExcludeId}
+                AND a.id != #{excludeId}
+            </if>
+			<if test="entity.name != null and entity.name != ''">
+            <bind name="likeName" value="'%' + entity.name + '%'"/>
+			AND a.name LIKE #{likeName}
+	        </if>
+			<if test="entity.code != null and entity.code != ''">
+            <bind name="likeCode" value="'%' + entity.code + '%'"/>
+			AND a.code LIKE #{likeCode}
+	        </if>
+			<if test="entity.idCardNum != null and entity.idCardNum != ''">
+            <bind name="likeIdCardNum" value="'%' + entity.idCardNum + '%'"/>
+			AND a.idCardNum LIKE #{likeIdCardNum}
+	        </if>
+			<if test="entity.mobile != null and entity.mobile != ''">
+            <bind name="likeMobile" value="'%' + entity.mobile + '%'"/>
+			AND a.mobile LIKE #{likeMobile}
+	        </if>
+			<if test="entity.contact != null and entity.contact != ''">
+            <bind name="likeContact" value="'%' + entity.contact + '%'"/>
+			AND a.contact LIKE #{likeContact}
+	        </if>
+			<if test="entity.tel != null and entity.tel != ''">
+            <bind name="likeTel" value="'%' + entity.tel + '%'"/>
+			AND a.tel LIKE #{likeTel}
+	        </if>
+			<if test="entity.bank != null and entity.bank != ''">
+            <bind name="likeBank" value="'%' + entity.bank + '%'"/>
+			AND a.bank LIKE #{likeBank}
+	        </if>
+			<if test="entity.bankBranch != null and entity.bankBranch != ''">
+            <bind name="likeBankBranch" value="'%' + entity.bankBranch + '%'"/>
+			AND a.bankBranch LIKE #{likeBankBranch}
+	        </if>
+			<if test="entity.bankAccountName != null and entity.bankAccountName != ''">
+            <bind name="likeBankAccountName" value="'%' + entity.bankAccountName + '%'"/>
+			AND a.bankAccountName LIKE #{likeBankAccountName}
+	        </if>
+			<if test="entity.bankAccount != null and entity.bankAccount != ''">
+            <bind name="likeBankAccount" value="'%' + entity.bankAccount + '%'"/>
+			AND a.bankAccount LIKE #{likeBankAccount}
+	        </if>
+        </where>
+        ORDER BY a.sort ASC
+    </select>
+
+    <select id="findList" resultType="com.hgsoft.modules.merchant.entity.TbMerchant" >
+		SELECT
+			<include refid="tbMerchantColumns"/>
+		FROM tb_merchant a
+		<include refid="tbMerchantJoins"/>
+		<where>
+
+			${dataScope}
+    			<if test="name != null and name != ''">
+    			<bind name="likeName" value="'%' + name + '%'"/>
+			    AND a.name LIKE #{likeName}
+    	</if>
+    			<if test="code != null and code != ''">
+    			<bind name="likeCode" value="'%' + code + '%'"/>
+			    AND a.code LIKE #{likeCode}
+    	</if>
+    			<if test="idCardNum != null and idCardNum != ''">
+    			<bind name="likeIdCardNum" value="'%' + idCardNum + '%'"/>
+			    AND a.idCardNum LIKE #{likeIdCardNum}
+    	</if>
+    			<if test="mobile != null and mobile != ''">
+    			<bind name="likeMobile" value="'%' + mobile + '%'"/>
+			    AND a.mobile LIKE #{likeMobile}
+    	</if>
+    			<if test="contact != null and contact != ''">
+    			<bind name="likeContact" value="'%' + contact + '%'"/>
+			    AND a.contact LIKE #{likeContact}
+    	</if>
+    			<if test="tel != null and tel != ''">
+    			<bind name="likeTel" value="'%' + tel + '%'"/>
+			    AND a.tel LIKE #{likeTel}
+    	</if>
+    			<if test="bank != null and bank != ''">
+    			<bind name="likeBank" value="'%' + bank + '%'"/>
+			    AND a.bank LIKE #{likeBank}
+    	</if>
+    			<if test="bankBranch != null and bankBranch != ''">
+    			<bind name="likeBankBranch" value="'%' + bankBranch + '%'"/>
+			    AND a.bankBranch LIKE #{likeBankBranch}
+    	</if>
+    			<if test="bankAccountName != null and bankAccountName != ''">
+    			<bind name="likeBankAccountName" value="'%' + bankAccountName + '%'"/>
+			    AND a.bankAccountName LIKE #{likeBankAccountName}
+    	</if>
+    			<if test="bankAccount != null and bankAccount != ''">
+    			<bind name="likeBankAccount" value="'%' + bankAccount + '%'"/>
+			    AND a.bankAccount LIKE #{likeBankAccount}
+    	</if>
+		</where>
+	</select>
+
+    <insert id="insertEntity">
+		INSERT INTO tb_merchant(
+			id,
+			name,
+			code,
+			sort,
+			node_level,
+			parent_ids,
+			parent_id,
+			id_card_typ,
+			id_card_num,
+			agent_name,
+			mobile,
+			contact,
+			tel,
+			bank,
+			bank_branch,
+			bank_account_name,
+			bank_account,
+			settle_period,
+			clear_service_rate,
+			address,
+			lat,
+			lng,
+			province_num,
+			start_time,
+			end_time,
+			operator_id,
+			clear_service_type,
+			union_service_type,
+			union_service_rate,
+			bank_address,
+			merchant_type,
+			access_type,
+			entrance_num,
+			exit_num,
+			parking_space_num,
+			compressor_gun_num,
+			mer_group_no,
+			merchant_no,
+			mer_prtcl_no,
+			enabled,
+			trx_place,
+			bank_rate,
+			create_by,
+			create_date,
+			update_by,
+			update_date,
+			remarks
+		) VALUES (
+            #{id},
+            #{name},
+            #{code},
+            #{sort},
+            #{nodeLevel},
+            #{parentIds},
+            #{parentId},
+            #{idCardType},
+            #{idCardNum},
+            #{agentName},
+            #{mobile},
+            #{contact},
+            #{tel},
+            #{bank},
+            #{bankBranch},
+            #{bankAccountName},
+            #{bankAccount},
+            #{settlePeriod},
+            #{clearServiceRate},
+            #{address},
+            #{lat},
+            #{lng},
+            #{provinceNum},
+            #{startTime},
+            #{endTime},
+            #{operatorId},
+            #{clearServiceType},
+            #{unionServiceType},
+            #{unionServiceRate},
+            #{bankAdress},
+            #{merchantType},
+            #{accessType},
+            #{entranceNum},
+            #{exitNum},
+            #{parkingSpaceNum},
+            #{compressorGunNum},
+            #{merGroupNo},
+            #{merchantNo},
+            #{merPrtclNo},
+            #{enabled},
+            #{trxPlace},
+            #{bankRate},
+            #{createBy.id},
+            #{createDate},
+            #{updateBy.id},
+            #{updateDate},
+            #{remarks}
+		)
+	</insert>
+
+	<update id="updateEntity">
+		UPDATE tb_merchant
+		<trim prefix="set" suffixOverrides=",">
+                  id = #{id},
+                  name = #{name},
+                  code = #{code},
+                  sort = #{sort},
+                  node_level = #{nodeLevel},
+                  parent_ids = #{parentIds},
+                  parent_id = #{parentId},
+                  id_card_typ = #{idCardType},
+                  id_card_num = #{idCardNum},
+                  agent_name = #{agentName},
+                  mobile = #{mobile},
+                  contact = #{contact},
+                  tel = #{tel},
+                  bank = #{bank},
+                  bank_branch = #{bankBranch},
+                  bank_account_name = #{bankAccountName},
+                  bank_account = #{bankAccount},
+                  settle_period = #{settlePeriod},
+                  clear_service_rate = #{clearServiceRate},
+                  address = #{address},
+                  lat = #{lat},
+                  lng = #{lng},
+                  province_num = #{provinceNum},
+                  start_time = #{startTime},
+                  end_time = #{endTime},
+                  operator_id = #{operatorId},
+                  clear_service_type = #{clearServiceType},
+                  union_service_type = #{unionServiceType},
+                  union_service_rate = #{unionServiceRate},
+                  bank_address = #{bankAdress},
+                  merchant_type = #{merchantType},
+                  access_type = #{accessType},
+                  entrance_num = #{entranceNum},
+                  exit_num = #{exitNum},
+                  parking_space_num = #{parkingSpaceNum},
+                  compressor_gun_num = #{compressorGunNum},
+                  mer_group_no = #{merGroupNo},
+                  merchant_no = #{merchantNo},
+                  merPrtcl_no = #{merPrtclNo},
+                  enabled = #{enabled},
+                  trx_place = #{trxPlace},
+                  bank_rate = #{bankRate},
+                  create_by = #{createBy.id},
+                  create_date = #{createDate},
+                  update_by = #{updateBy.id},
+                  update_date = #{updateDate},
+                  remarks = #{remarks}
+        </trim>
+		WHERE a.id = #{id}
+	</update>
+
+
+	<delete id="removeById">
+		DELETE
+		FROM tb_merchant
+		WHERE a.id = #{id}
+	</delete>
+
+	<!--逻辑删除-->
+	<update id="deleteByLogic">
+		UPDATE tb_merchant SET
+			del_flag = #{DEL_FLAG_DELETE}
+		WHERE id = #{id}
+	</update>
+
+
+	<select id="findAllChildNodes" resultType="com.hgsoft.modules.merchant.entity.TbMerchant">
+		select distinct a.*
+		<include refid="com.hgsoft.ecip.framework.core.mapper.SysrTreeCommonMapper.findAllChildNodes">
+			<property name="tableName" value="tb_merchant"/>
+			<property name="idName" value="id"/>
+			<property name="ids" value="#{ids}"/>
+			<property name="path" value="parent_ids"/>
+			<property name="condition" value=""/>
+		</include>
+	</select>
+</mapper>

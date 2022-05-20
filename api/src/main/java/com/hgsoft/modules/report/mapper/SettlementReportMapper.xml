@@ -1,0 +1,337 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.report.mapper.SettlementReportMapper">
+
+	<resultMap type="com.hgsoft.modules.report.entity.SettlementReport" id="BaseResultMap" autoMapping="true">
+		<id column="sys_id" property="sysId" />
+    	<result column="trx_date" property="trxDate" />
+    	<result column="toll_settlement_date" property="tollSettlementDate" />
+    	<result column="merchant_id" property="merchantId" />
+    	<result column="merchant_name" property="merchantName" />
+    	<result column="site_id" property="siteId" />
+    	<result column="site_name" property="siteName" />
+    	<result column="toll_settlement_interval" property="tollSettlementInterval" />
+    	<result column="service_settlement_interval" property="serviceSettlementInterval" />
+    	<result column="total_settlement_cnt" property="totalSettlementCnt" />
+    	<result column="total_settlement_amt" property="totalSettlementAmt" />
+    	<result column="reject_settlement_cnt" property="rejectSettlementCnt" />
+    	<result column="reject_settlement_amt" property="rejectSettlementAmt" />
+    	<result column="actual_settlement_amt" property="actualSettlementAmt" />
+    	<result column="service_rate" property="serviceRate" />
+    	<result column="service_type" property="serviceType" />
+    	<result column="service_amt" property="serviceAmt" />
+    	<result column="center_service_rate" property="centerServiceRate" />
+    	<result column="center_service_amt" property="centerServiceAmt" />
+    	<result column="agent_rate" property="agentRate" />
+    	<result column="agent_amt" property="agentAmt" />
+    	<result column="total_gdetc_cnt" property="totalGdetcCnt" />
+    	<result column="total_gdetc_amt" property="totalGdetcAmt" />
+    	<result column="reject_gdetc_cnt" property="rejectGdetcCnt" />
+    	<result column="reject_gdetc_amt" property="rejectGdetcAmt" />
+    	<result column="actual_gdetc_amt" property="actualGdetcAmt" />
+    	<result column="service_gdetc_amt" property="serviceGdetcAmt" />
+    	<result column="bank_transfer_amt" property="bankTransferAmt" />
+    	<result column="bank_transfer_sta" property="bankTransferSta" />
+    	<result column="bank_transfer_time" property="bankTransferTime" />
+		<result column="merchant_group_id" property="merchantGroupId" />
+		<result column="createtime" property="createtime" />
+	</resultMap>
+
+	<sql id="settlementReportColumns">
+		a.sys_id AS "sysId",
+		a.trx_date AS "trxDate",
+		a.toll_settlement_date AS "tollSettlementDate",
+		a.merchant_id AS "merchantId",
+		a.merchant_name AS "merchantName",
+		a.site_id AS "siteId",
+		a.site_name AS "siteName",
+		a.toll_settlement_interval AS "tollSettlementInterval",
+        case when a.toll_settlement_interval = 1 then 'T+1'
+        when a.toll_settlement_interval = 2 then 'T+4'
+        when a.toll_settlement_interval = 3 then '月结'
+        ELSE '未知'
+		END AS "tollSettlementIntervalTxt",
+		a.service_settlement_interval AS "serviceSettlementInterval",
+        case when a.service_settlement_interval = 1 then 'T+1'
+        when a.service_settlement_interval = 2 then 'T+4'
+        when a.service_settlement_interval = 3 then '月结'
+        ELSE '未知'
+		END AS "serviceSettlementIntervalTxt",
+		a.total_settlement_cnt AS "totalSettlementCnt",
+		a.total_settlement_amt AS "totalSettlementAmt",
+		a.reject_settlement_cnt AS "rejectSettlementCnt",
+		a.reject_settlement_amt AS "rejectSettlementAmt",
+		a.actual_settlement_amt AS "actualSettlementAmt",
+		a.service_rate AS "serviceRate",
+		a.service_type AS "serviceType",
+		a.service_amt AS "serviceAmt",
+		a.center_service_rate AS "centerServiceRate",
+		a.center_service_amt AS "centerServiceAmt",
+		a.agent_rate AS "agentRate",
+		a.agent_amt AS "agentAmt",
+		a.total_gdetc_cnt AS "totalGdetcCnt",
+		a.total_gdetc_amt AS "totalGdetcAmt",
+		a.reject_gdetc_cnt AS "rejectGdetcCnt",
+		a.reject_gdetc_amt AS "rejectGdetcAmt",
+		a.actual_gdetc_amt AS "actualGdetcAmt",
+		a.service_gdetc_amt AS "serviceGdetcAmt",
+		a.bank_transfer_amt AS "bankTransferAmt",
+		a.bank_transfer_sta AS "bankTransferSta",
+        case when a.bank_transfer_sta = 0 then '待转账'
+        when a.bank_transfer_sta = 1 then '已转账'
+        ELSE '未知'
+		END AS "bankTransferStaTxt",
+		a.bank_transfer_time AS "bankTransferTime",
+        a.merchant_group_id AS "merchantGroupId",
+		a.createtime AS "createtime"
+	</sql>
+
+	<sql id="settlementReportJoins">
+	</sql>
+
+
+	<select id="getById" resultType="com.hgsoft.modules.report.entity.SettlementReport" >
+		SELECT
+			<include refid="settlementReportColumns"/>
+		FROM tb_settlement_report a
+		<include refid="settlementReportJoins"/>
+		WHERE a.sysId = #{sys_id}
+	</select>
+
+
+	<select id="getByEntity" resultType="com.hgsoft.modules.report.entity.SettlementReport" >
+		SELECT
+			<include refid="settlementReportColumns"/>
+		FROM tb_settlement_report a
+		<include refid="settlementReportJoins"/>
+		WHERE a.sysId = #{sys_id}
+	</select>
+
+	<select id="findPage" resultType="com.hgsoft.modules.report.entity.SettlementReport" >
+		SELECT
+			<include refid="settlementReportColumns" />
+		FROM tb_settlement_report a
+		<include refid="settlementReportJoins"/>
+		<where>
+
+			${entity.dataScope}
+			<if test="entity.beginTrxDate != null and entity.endTrxDate != null ">
+				AND a.trx_date BETWEEN STR_TO_DATE(#{entity.beginTrxDate}, '%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.endTrxDate}, '%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND a.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+			AND a.merchant_id = #{entity.merchantId}
+	        </if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+			AND a.site_id = #{entity.siteId}
+	        </if>
+			<if test="entity.tollSettlementInterval != null and entity.tollSettlementInterval != ''">
+			AND a.toll_settlement_interval = #{entity.tollSettlementInterval}
+	        </if>
+			<if test="entity.serviceType != null and entity.serviceType != ''">
+			AND a.service_type = #{entity.serviceType}
+	        </if>
+		</where>
+        order by a.trx_date desc, a.bank_transfer_sta asc
+	</select>
+
+	<select id="findList" resultType="com.hgsoft.modules.report.entity.SettlementReport" >
+		SELECT
+			<include refid="settlementReportColumns"/>
+		FROM tb_settlement_report a
+		<include refid="settlementReportJoins"/>
+		<where>
+			<if test="beginTrxDate != null and endTrxDate != null">
+				AND a.trx_date BETWEEN STR_TO_DATE(#{beginTrxDate},'%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{endTrxDate},'%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="merchantGroupId != null and merchantGroupId != ''">
+				AND a.merchant_group_id = #{merchantGroupId}
+			</if>
+    			<if test="merchantId != null and merchantId != ''">
+			    AND a.merchant_id = #{merchantId}
+    	</if>
+    			<if test="siteId != null and siteId != ''">
+			    AND a.site_id = #{siteId}
+    	</if>
+    			<if test="tollSettlementInterval != null">
+			    AND a.toll_settlement_interval = #{tollSettlementInterval}
+    	</if>
+    			<if test="serviceType != null">
+			    AND a.service_type = #{serviceType}
+    	</if>
+		</where>
+		order by a.trx_date desc, a.bank_transfer_sta asc
+	</select>
+
+	<select id="findAllList" resultType="com.hgsoft.modules.report.entity.SettlementReport" >
+		SELECT
+			<include refid="settlementReportColumns"/>
+		FROM tb_settlement_report a
+	</select>
+
+	<insert id="insertEntity">
+		INSERT INTO tb_settlement_report(
+			sys_id,
+			trx_date,
+			toll_settlement_date,
+			merchant_id,
+			merchant_name,
+			site_id,
+			site_name,
+			toll_settlement_interval,
+			service_settlement_interval,
+			total_settlement_cnt,
+			total_settlement_amt,
+			reject_settlement_cnt,
+			reject_settlement_amt,
+			actual_settlement_amt,
+			service_rate,
+			service_type,
+			service_amt,
+			center_service_rate,
+			center_service_amt,
+			agent_rate,
+			agent_amt,
+			total_gdetc_cnt,
+			total_gdetc_amt,
+			reject_gdetc_cnt,
+			reject_gdetc_amt,
+			actual_gdetc_amt,
+			service_gdetc_amt,
+			bank_transfer_amt,
+			bank_transfer_sta,
+			bank_transfer_time,
+			createtime
+		) VALUES (
+            #{sysId},
+            #{trxDate},
+            #{tollSettlementDate},
+            #{merchantId},
+            #{merchantName},
+            #{siteId},
+            #{siteName},
+            #{tollSettlementInterval},
+            #{serviceSettlementInterval},
+            #{totalSettlementCnt},
+            #{totalSettlementAmt},
+            #{rejectSettlementCnt},
+            #{rejectSettlementAmt},
+            #{actualSettlementAmt},
+            #{serviceRate},
+            #{serviceType},
+            #{serviceAmt},
+            #{centerServiceRate},
+            #{centerServiceAmt},
+            #{agentRate},
+            #{agentAmt},
+            #{totalGdetcCnt},
+            #{totalGdetcAmt},
+            #{rejectGdetcCnt},
+            #{rejectGdetcAmt},
+            #{actualGdetcAmt},
+            #{serviceGdetcAmt},
+            #{bankTransferAmt},
+            #{bankTransferSta},
+            #{bankTransferTime},
+            #{createtime}
+		)
+	</insert>
+
+	<update id="updateEntity">
+		UPDATE tb_settlement_report
+		<trim prefix="set" suffixOverrides=",">
+                  sys_id = #{sysId},
+                  trx_date = #{trxDate},
+                  toll_settlement_date = #{tollSettlementDate},
+                  merchant_id = #{merchantId},
+                  merchant_name = #{merchantName},
+                  site_id = #{siteId},
+                  site_name = #{siteName},
+                  toll_settlement_interval = #{tollSettlementInterval},
+                  service_settlement_interval = #{serviceSettlementInterval},
+                  total_settlement_cnt = #{totalSettlementCnt},
+                  total_settlement_amt = #{totalSettlementAmt},
+                  reject_settlement_cnt = #{rejectSettlementCnt},
+                  reject_settlement_amt = #{rejectSettlementAmt},
+                  actual_settlement_amt = #{actualSettlementAmt},
+                  service_rate = #{serviceRate},
+                  service_type = #{serviceType},
+                  service_amt = #{serviceAmt},
+                  center_service_rate = #{centerServiceRate},
+                  center_service_amt = #{centerServiceAmt},
+                  agent_rate = #{agentRate},
+                  agent_amt = #{agentAmt},
+                  total_gdetc_cnt = #{totalGdetcCnt},
+                  total_gdetc_amt = #{totalGdetcAmt},
+                  reject_gdetc_cnt = #{rejectGdetcCnt},
+                  reject_gdetc_amt = #{rejectGdetcAmt},
+                  actual_gdetc_amt = #{actualGdetcAmt},
+                  service_gdetc_amt = #{serviceGdetcAmt},
+                  bank_transfer_amt = #{bankTransferAmt},
+                  bank_transfer_sta = #{bankTransferSta},
+                  bank_transfer_time = #{bankTransferTime},
+                  createtime = #{createtime}
+        </trim>
+		WHERE a.sysId = #{sys_id}
+	</update>
+
+
+	<delete id="removeById">
+		DELETE
+		FROM tb_settlement_report
+		WHERE a.sysId = #{sys_id}
+	</delete>
+
+	<update id="updateBankTransferSta">
+		UPDATE tb_settlement_report SET
+			bank_transfer_sta = #{bankTransferSta},
+			bank_transfer_time = now()
+		WHERE sys_id = #{sysId}
+	</update>
+
+
+	<!-- 根据实体名称和字段名称和字段值获取唯一记录 -->
+	<select id="findUniqueByProperty" resultType="com.hgsoft.modules.report.entity.SettlementReport" statementType="STATEMENT">
+		select * FROM tb_settlement_report  where ${propertyName} = '${value}'
+	</select>
+
+	<select id="getSum" resultType="com.hgsoft.modules.report.entity.SettlementReport">
+		SELECT
+	    sum(a.total_settlement_cnt) AS "totalSettlementCnt",
+		sum(a.total_settlement_amt) AS "totalSettlementAmt",
+		sum(a.reject_settlement_cnt) AS "rejectSettlementCnt",
+		sum(a.reject_settlement_amt) AS "rejectSettlementAmt",
+		sum(a.actual_settlement_amt) AS "actualSettlementAmt",
+		sum(a.service_amt) AS "serviceAmt",
+		sum(a.bank_transfer_amt) AS "bankTransferAmt"
+		FROM tb_settlement_report a
+		<include refid="settlementReportJoins"/>
+		<where>
+			<if test="entity.beginTrxDate != null and entity.endTrxDate != null ">
+				AND a.trx_date BETWEEN STR_TO_DATE(#{entity.beginTrxDate}, '%Y-%m-%d %H:%i:%s') AND
+				STR_TO_DATE(#{entity.endTrxDate}, '%Y-%m-%d %H:%i:%s')
+			</if>
+			<if test="entity.merchantGroupId != null and entity.merchantGroupId != ''">
+				AND a.merchant_group_id = #{entity.merchantGroupId}
+			</if>
+			<if test="entity.merchantId != null and entity.merchantId != ''">
+				AND a.merchant_id = #{entity.merchantId}
+			</if>
+			<if test="entity.siteId != null and entity.siteId != ''">
+				AND a.site_id = #{entity.siteId}
+			</if>
+			<if test="entity.tollSettlementInterval != null">
+				AND a.toll_settlement_interval = #{entity.tollSettlementInterval}
+			</if>
+			<if test="entity.serviceType != null">
+				AND a.service_type = #{entity.serviceType}
+			</if>
+		</where>
+	</select>
+
+
+</mapper>

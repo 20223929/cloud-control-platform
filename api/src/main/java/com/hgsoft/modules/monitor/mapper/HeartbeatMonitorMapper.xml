@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.hgsoft.modules.monitor.mapper.HeartbeatMonitorMapper">
+
+	<resultMap type="com.hgsoft.modules.monitor.entity.HeartbeatMonitor" id="BaseResultMap" autoMapping="true">
+		<id column="sys_id" property="sysId" />
+    	<result column="heartbeat_trans_id" property="heartbeatTransId" />
+    	<result column="site_id" property="siteId" />
+    	<result column="equipment_id" property="equipmentId" />
+    	<result column="service_type" property="serviceType" />
+    	<result column="card_blacklist_version" property="cardBlacklistVersion" />
+    	<result column="obu_blackelist_version" property="obuBlackelistVersion" />
+    	<result column="site_soft_version" property="siteSoftVersion" />
+    	<result column="site_soft_state" property="siteSoftState" />
+    	<result column="antenna_state" property="antennaState" />
+    	<result column="antenna_brand" property="antennaBrand" />
+    	<result column="antenna_model" property="antennaModel" />
+    	<result column="etc_box_brand" property="etcBoxBrand" />
+    	<result column="etc_box_model" property="etcBoxModel" />
+    	<result column="max_trans_fee_config" property="maxTransFeeConfig" />
+    	<result column="device_id" property="deviceId" />
+    	<result column="create_time" property="createTime" />
+		<result column="lane_status" property="laneStatus"/>
+	</resultMap>
+
+	<select id="findPage" resultMap="BaseResultMap" >
+		select c.* from(
+			select a.site_id,a.equipment_id,a.service_type,a.site_soft_version,b.site_soft_state,b.antenna_state,a.antenna_brand,a.antenna_model,a.etc_box_brand,a.etc_box_model,b.max_trans_fee_config,
+		           b.card_blacklist_version,b.obu_blackelist_version,date_format(b.create_time,'%Y-%m-%d %H:%i:%s') create_time,case when b.antenna_state = 0 or
+			       timestampdiff(second,b.create_time,now()) > 86400 then 2 when b.card_blacklist_version is not null and
+		           (timestampdiff(second,str_to_date(substring(b.card_blacklist_version,1,8),'%Y%m%d'),now()) > 86400
+		           or timestampdiff(second,str_to_date(substring(b.card_blacklist_version,10),'%Y%m%d%H%i'),now()) > 86400) then 2
+		           when b.obu_blackelist_version is not null and (timestampdiff(second,str_to_date(substring(b.obu_blackelist_version,1,8),'%Y%m%d'),now()) > 86400
+		           or timestampdiff(second,str_to_date(substring(b.obu_blackelist_version,10),'%Y%m%d%H%i'),now()) > 86400) then 2 else 1 end lane_status
+			from tb_device_monitor a left join tb_device_monitor_heartbeat_eexit b on a.sys_id = b.device_monitor_id
+			where b.sys_id in (
+				select max(c.sys_id) from tb_device_monitor_heartbeat_eexit c group by c.device_monitor_id
+			)
+		) c
+		<where>
+			<if test="entity.userMerchantParam != null">
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open=" ( c.site_id like " close=" ) " separator=" or ">
+							concat(#{item},'%')
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						AND c.site_id LIKE concat(#{entity.userMerchantParam.searchIds[0]},'%')
+					</when>
+					<otherwise>
+						AND c.site_id = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+			<if test="entity.equipmentId != null and entity.equipmentId != ''">
+				and c.equipment_id = #{entity.equipmentId}
+			</if>
+			<if test="entity.antennaState != null and entity.antennaState != ''">
+				and c.antenna_state = #{entity.antennaState}
+			</if>
+			<if test="entity.siteSoftState != null and entity.siteSoftState != ''">
+				and c.site_soft_state = #{entity.siteSoftState}
+			</if>
+			<if test="entity.siteSoftVersion != null and entity.siteSoftVersion != ''">
+				and c.site_soft_version = #{entity.siteSoftVersion}
+			</if>
+			<if test="entity.antennaBrand != null and entity.antennaBrand != ''">
+				and c.antenna_brand = #{entity.antennaBrand}
+			</if>
+			<if test="entity.etcBoxBrand != null and entity.etcBoxBrand != ''">
+				and c.etc_box_brand = #{entity.etcBoxBrand}
+			</if>
+			<if test="entity.laneStatus != null">
+				and c.lane_status = #{entity.laneStatus}
+			</if>
+		</where>
+		order by c.site_id,c.equipment_id,c.service_type asc,c.create_time desc
+	</select>
+
+	<select id="findList" resultMap="BaseResultMap">
+		select c.* from(
+			select a.site_id,a.equipment_id,a.service_type,a.site_soft_version,b.site_soft_state,b.antenna_state,a.antenna_brand,a.antenna_model,a.etc_box_brand,a.etc_box_model,b.max_trans_fee_config,
+				   b.card_blacklist_version,b.obu_blackelist_version,date_format(b.create_time,'%Y-%m-%d %H:%i:%s') create_time,case when b.antenna_state = 0 or
+				   timestampdiff(second,b.create_time,now()) > 86400 then 2 when b.card_blacklist_version is not null and
+				   (timestampdiff(second,str_to_date(substring(b.card_blacklist_version,1,8),'%Y%m%d'),now()) > 86400
+				   or timestampdiff(second,str_to_date(substring(b.card_blacklist_version,10),'%Y%m%d%H%i'),now()) > 86400) then 2
+				   when b.obu_blackelist_version is not null and (timestampdiff(second,str_to_date(substring(b.obu_blackelist_version,1,8),'%Y%m%d'),now()) > 86400
+				   or timestampdiff(second,str_to_date(substring(b.obu_blackelist_version,10),'%Y%m%d%H%i'),now()) > 86400) then 2 else 1 end lane_status
+			from tb_device_monitor a left join tb_device_monitor_heartbeat_eexit b on a.sys_id = b.device_monitor_id
+			where b.sys_id in (
+				select max(c.sys_id) from tb_device_monitor_heartbeat_eexit c group by c.device_monitor_id
+			)
+		) c
+		<where>
+			<if test="entity.userMerchantParam != null">
+				<choose>
+					<when test="entity.userMerchantParam.nodeLevel == 1">
+						<foreach collection="entity.userMerchantParam.searchIds" item="item" open=" ( c.site_id like " close=" ) " separator=" or ">
+							concat(#{item},'%')
+						</foreach>
+					</when>
+					<when test="entity.userMerchantParam.nodeLevel == 2">
+						AND c.site_id LIKE concat(#{entity.userMerchantParam.searchIds[0]},'%')
+					</when>
+					<otherwise>
+						AND c.site_id = #{entity.userMerchantParam.searchIds[0]}
+					</otherwise>
+				</choose>
+			</if>
+			<if test="entity.equipmentId != null and entity.equipmentId != ''">
+				and c.equipment_id = #{entity.equipmentId}
+			</if>
+			<if test="entity.antennaState != null and entity.antennaState != ''">
+				and c.antenna_state = #{entity.antennaState}
+			</if>
+			<if test="entity.siteSoftState != null and entity.siteSoftState != ''">
+				and c.site_soft_state = #{entity.siteSoftState}
+			</if>
+			<if test="entity.siteSoftVersion != null and entity.siteSoftVersion != ''">
+				and c.site_soft_version = #{entity.siteSoftVersion}
+			</if>
+			<if test="entity.antennaBrand != null and entity.antennaBrand != ''">
+				and c.antenna_brand = #{entity.antennaBrand}
+			</if>
+			<if test="entity.etcBoxBrand != null and entity.etcBoxBrand != ''">
+				and c.etc_box_brand = #{entity.etcBoxBrand}
+			</if>
+			<if test="entity.laneStatus != null">
+				and c.lane_status = #{entity.laneStatus}
+			</if>
+		</where>
+		order by c.site_id,c.equipment_id,c.service_type asc,c.create_time desc
+	</select>
+</mapper>
